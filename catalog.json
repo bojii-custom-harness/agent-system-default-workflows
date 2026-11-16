@@ -1,4 +1,27 @@
 {
   "schemaVersion": "agent-system.default-workflow-catalog.v1",
-  "entries": []
+  "entries": [
+    {
+      "kind": "workflow",
+      "id": "workflow-agent-writer",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-agent-writer-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-agent-writer-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-agent-writer-2.0.0/workflow-workflow-agent-writer-2.0.0.json",
+          "size": 101081,
+          "sha256": "eadc52a53b01bb6c358bbf1db7381974d646f447a6ea2a6b7c1cf9240641829b"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-agent-writer-2.0.0/release-metadata.json",
+          "size": 617,
+          "sha256": "cecee1ebde2b3668c9c4185a91a9a448546d835600ea99d12f2e9f6b806d7c38"
+        }
+      ]
+    }
+  ]
 }
