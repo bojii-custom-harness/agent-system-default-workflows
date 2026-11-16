@@ -9,7 +9,7 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TEST_BASE = process.env.LOCALAPPDATA
   ? join(process.env.LOCALAPPDATA, "Temp", "opencode")
   : join(tmpdir(), "opencode");
-const COPY_PATHS = [".gitattributes", "bin", "schemas", "src", "system-skills", "workflows", "catalog.json", "source.json", "source-baseline.json", "package.json"];
+const COPY_PATHS = [".gitattributes", "bin", "schemas", "src", "system-skills", "workflows", "source.json", "source-baseline.json", "package.json"];
 
 export function runGit(cwd, args) {
   const result = spawnSync("git", args, { cwd, encoding: "buffer", timeout: 30000, windowsHide: true });

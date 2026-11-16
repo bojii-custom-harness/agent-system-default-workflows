@@ -184,5 +184,7 @@ test("公開 bundle asset 是 deterministic JSON，含 manifest 與三個完整�
   const metadata = JSON.parse(artifacts.metadataAsset.bytes.toString("utf8"));
   assert.equal(metadata.sourceCommit, "7f5c7a56bce02501547e2933bbefd7f4a745f0b9");
   assert.equal(metadata.asset.sha256, artifacts.payload.sha256);
-  assert.equal(await readFile(join(ROOT, "catalog.json"), "utf8").then((text) => JSON.parse(text).entries.length), 0);
+  const currentCatalog = JSON.parse(await readFile(join(ROOT, "catalog.json"), "utf8"));
+  assert.equal(currentCatalog.entries.length, 12);
+  assert.ok(currentCatalog.entries.every((entry) => entry.version === "2.0.0" && entry.channel === "stable"));
 });
