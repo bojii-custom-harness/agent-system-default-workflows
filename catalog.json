@@ -22,6 +22,50 @@
           "sha256": "cecee1ebde2b3668c9c4185a91a9a448546d835600ea99d12f2e9f6b806d7c38"
         }
       ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-command-writer",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-command-writer-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-command-writer-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-command-writer-2.0.0/workflow-workflow-command-writer-2.0.0.json",
+          "size": 12163,
+          "sha256": "c65145c37c8ea138e4c40555192ca4a797fce330492f7224912533e3551c2df0"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-command-writer-2.0.0/release-metadata.json",
+          "size": 626,
+          "sha256": "3a641022cb84f6dc6d2db52880ec441f5a703c4c5eaf4a6e0b380600fadb18f0"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-file-preview-editor",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-file-preview-editor-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-file-preview-editor-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-file-preview-editor-2.0.0/workflow-workflow-file-preview-editor-2.0.0.json",
+          "size": 7574,
+          "sha256": "3d5279bf8e45464107787d265e8b8a153c86c90fe0f7073f86eb0387e99a09b8"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-file-preview-editor-2.0.0/release-metadata.json",
+          "size": 650,
+          "sha256": "de2e599cd0b01f656192a3d40c70724cb6240dbb6b7591ee1db1974768660be1"
+        }
+      ]
     }
   ]
 }
