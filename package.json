@@ -1,0 +1,17 @@
+{
+  "name": "@bojii-custom-harness/agent-system-default-workflows",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "default-workflows": "./bin/default-workflows.mjs"
+  },
+  "scripts": {
+    "validate": "node ./bin/default-workflows.mjs validate",
+    "test": "node --test --test-timeout=45000 --test-concurrency=1 \"test/*.test.mjs\"",
+    "check": "node ./scripts/check-syntax.mjs"
+  }
+}

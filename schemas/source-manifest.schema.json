@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/source-manifest.schema.json",
+  "title": "Agent System Default Workflow source identity",
+  "type": "object",
+  "required": ["schemaVersion", "sourceRepository", "sourceCommit", "workflowCount", "systemSkillIds", "workflowGeneratorSourceVersion", "systemSkillsSourceVersion", "contentVersion"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.default-workflow-source.v1" },
+    "sourceRepository": { "const": "Agent System" },
+    "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "workflowCount": { "const": 11 },
+    "systemSkillIds": { "const": ["plugin-discovery", "workflow-assembly", "resource-authoring"] },
+    "workflowGeneratorSourceVersion": { "const": "0.0.30" },
+    "systemSkillsSourceVersion": { "const": "1.0.9" },
+    "contentVersion": { "const": "2.0.0" }
+  },
+  "additionalProperties": false
+}

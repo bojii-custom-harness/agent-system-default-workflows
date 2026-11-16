@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/catalog.schema.json",
+  "title": "Agent System Default Workflow source catalog",
+  "type": "object",
+  "required": ["schemaVersion", "entries"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.default-workflow-catalog.v1" },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["name", "url", "size", "sha256"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "size": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "entry": {
+      "type": "object",
+      "required": ["kind", "id", "version", "channel", "tag", "sourceCommit", "assets"],
+      "properties": {
+        "kind": { "enum": ["workflow", "system-skills"] },
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "channel": { "enum": ["stable", "dev"] },
+        "tag": { "type": "string" },
+        "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "assets": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/asset" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "schemaVersion": "agent-system.workflow.v3",
+  "id": "workflow-plugin-finder",
+  "uuid": "00000000-0000-4000-8000-000000000007",
+  "version": "2.0.0",
+  "name": "Workflow Find Plugin",
+  "description": "依需求搜尋或接受指定來源，經使用者同意後匯入 Plugin、辨識能力並登錄 project Catalog。",
+  "scope": "global",
+  "nodes": [
+    {
+      "id": "command",
+      "type": "resource.command",
+      "position": {
+        "x": 80,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-plugin-entry-v7-agent-policy-v2",
+        "scope": "global",
+        "content": "---\ndescription: 搜尋或匯入外部 OpenCode Plugin\nagent: find-plugin-primary-v6-native-v2-permissions-v2\n---\n輸入是使用者的需求或指定來源；候選須列出用途、來源與有限狀態。$ARGUMENTS\n\n依作者文件自動登錄參數名稱、用途、必填與敏感定義，不提交值。完成時明列待補填參數，讓使用者在 Workflow 管理 Plugin 參數介面填寫。"
+      }
+    },
+    {
+      "id": "primary",
+      "type": "resource.agent",
+      "position": {
+        "x": 430,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-plugin-primary-v6-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 尋找、確認、匯入並登錄外部 OpenCode Plugin 與參數定義\nmode: primary\nsteps: 30\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: websearch\n    resource: \"*\"\n    effect: allow\n  - action: webfetch\n    resource: \"*\"\n    effect: allow\n  - action: find-plugin-import-v3\n    resource: \"*\"\n    effect: allow\n  - action: find-plugin-register\n    resource: \"*\"\n    effect: allow\n  - action: find-plugin-parameters-v2\n    resource: \"*\"\n    effect: allow\n  - action: skill\n    resource: plugin-discovery\n    effect: allow\n---\n你是 Find Plugin 的 Primary Agent。Call the native skill tool with name plugin-discovery before discovery. 本版本的 import Tool 是 find-plugin-import-v3，沿用 Skill 中 v2 的 source schema；參數工具改用 find-plugin-parameters-v2，只登錄定義、不提交 value。\n\n先搜尋 OpenCode Plugin 並讀取作者安裝文件，不搜尋名稱相似的一般 npm 套件。只有能力需求時列出最多 8 個候選，等待使用者選定；指定安裝 Plugin 或 repository 已是授權，不須再次選候選。作者的 OpenCode 安裝章節優先於首頁的獨立程式介紹。repository 網址不等於 Git 安裝來源：作者指定 npm 發行包時核對 registry 的 exact version，再以 npm source 匯入；這種情況不需要 Git SHA，不可改匯入缺少 dist 的 dev 分支。webfetch 傳輸失敗先重試一次；GitHub 網頁不可用時嘗試同一 repository 的 raw 安裝文件。\n\n只有在使用者同意或明確要求、且 find-plugin-import-v3 成功後，才呼叫 find-plugin-register。從 import response 原樣取得 pluginName、source、resolved contentHash/version/revision。根據作者文件與 runtimeEvidence 辨識 Agent、Tool、Skill、MCP，使用 runtime 的 exact name，不縮寫顯示名稱；runtime inventory 也含 OpenCode 內建資源，沒有作者證據時不可歸給 Plugin。依每個 target 的觀察建立 contributions，status 一律 unverified；有可辨識能力時不可只提交空陣列。節點登錄由你完成，不要求使用者手填。\n\n依 public schema，以 scope project 與 exact project，main 與 workflow-test 各呼叫一次 find-plugin-register，依序執行避免同時重新整理 Catalog。provenance 包含小寫 kind npm、git 或 local，以及 source、revision；npm/local 的 revision 使用 resolved.contentHash，git 使用 pinned revision。recognition 使用 complete 或 partial 加 unavailable 陣列；背景 hook 使用 backgroundBehaviors，不能當 callable node。每個 contribution kind 必須是小寫 agent、tool、skill 或 mcp。\n\nPOST status unverified is not readiness, ready, or final readiness; only the subsequent Catalog targetStatuses may establish status. Read /bff/workflow-resources after registration，使用 find-plugin-register 的 Catalog 回應分別報告 main 與 workflow-test；不得從 import ready 推論能力已 verified。登錄錯誤依實際 schema 修正後重試；工具失敗或無法完成時先呼叫 error_log_recent，再回傳 bounded failure response。不得輸出 secrets、token、credential 或完整 log。\n\n必要完成條件：以 webfetch 讀取作者的設定與認證文件，自動辨識參數 exact name、用途、required、sensitive。存在需求時，必須呼叫 find-plugin-parameters-v2 登錄；沒有憑證仍要先建立定義。requirements 只包含 name、description、required、sensitive，不包含 value；不得索取、產生或填入憑證，不要求使用者自行定義名稱。文件不可用時標示參數辨識尚未完成，不猜測名稱。工具保留既有值且不重啟環境。最後依 missingRequired 明列『待補填參數』名稱與用途，指引到 Workflow 的『管理 Plugin 參數』填寫，再由 Plugin 管理介面重啟兩個環境；未補填不得宣稱已可使用。已安裝 Plugin 被要求補齊參數時，也要執行此流程。\n\n匯入與登錄不直接修改目前 Workflow，也不建立 Plugin graph node；可呼叫能力進入 Catalog 供 Workflow 選用。不需要 targetNodeID。\n\nCanvas node contract（必要）：managed Agent node 必須保留 permission 的 \"*\": deny 與 error_log_recent: allow，以及 node identity、type、mode、scope、name、既有 Binding 與 Delegation，不得要求 backend 補寫 permission、Binding、Resource 或 graph edge。Default Workflow 不得使用 question capability。"
+      }
+    },
+    {
+      "id": "websearch",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 80
+      },
+      "data": {
+        "mode": "reference",
+        "name": "websearch",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "webfetch",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 220
+      },
+      "data": {
+        "mode": "reference",
+        "name": "webfetch",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "import",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 380
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-plugin-import-v3",
+        "scope": "global",
+        "content": "\n\nconst projectPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;\nconst baseURL = () => (process.env.AGENT_SYSTEM_BFF_BASE_URL || \"http://agent-system-backend:8000\").replace(/\\/+$/, \"\");\nfunction record(value) { return Boolean(value) && typeof value === \"object\" && !Array.isArray(value); }\nfunction sourceOf(value) {\n  if (!record(value) || typeof value.type !== \"string\") throw new Error(\"Plugin source must be an object with type\");\n  if (![\"local\", \"npm\", \"git\"].includes(value.type)) throw new Error(\"Plugin source type is unsupported\");\n  const allowed = value.type === \"local\" ? [\"type\", \"path\"] : value.type === \"npm\" ? [\"type\", \"package\"] : [\"type\", \"repository\", \"revision\"];\n  if (Object.keys(value).some((key) => !allowed.includes(key)) || allowed.slice(1).some((key) => typeof value[key] !== \"string\" || !value[key].trim())) throw new Error(\"Plugin source fields are invalid\");\n  return Object.fromEntries(allowed.map((key) => [key, value[key].trim()]));\n}\n\nexport default {\n  description: \"匯入已授權的 OpenCode Plugin，回傳兩個 runtime 的能力名稱供 Agent 辨識登錄。\",\n  input: {\"type\":\"object\",\"properties\":{\"source\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":20000,\"description\":\"JSON object for the user-approved local, npm, or git source\"}},\"required\":[\"source\"],\"additionalProperties\":false},\n  async execute(args, context) {\n    const directory = typeof context?.directory === \"string\" ? context.directory.replace(/\\\\/g, \"/\") : \"\";\n    const match = directory.match(/\\/(?:workflow\\/)?projects\\/([^/]+)\\/?$/);\n    const project = match?.[1];\n    if (!project || !projectPattern.test(project) || typeof context?.sessionID !== \"string\" || !context.sessionID) throw new Error(\"Canonical session Project context is unavailable\");\n    const source = sourceOf(JSON.parse(args.source));\n    const endpoint = new URL(\"/bff/projects/\" + encodeURIComponent(project) + \"/plugins/import\", baseURL());\n    const response = await fetch(endpoint, { method: \"POST\", headers: { \"content-type\": \"application/json\", \"x-agent-system-workspace\": project }, body: JSON.stringify({ source }), signal: AbortSignal.timeout(180000) });\n    const payload = await response.json().catch(() => undefined);\n    if (!response.ok || !record(payload)) throw new Error(\"Plugin Import failed with a bounded public error\");\n    const targets = record(payload.targets) ? {\n      main: record(payload.targets.main) ? { status: payload.targets.main.status, runtimeStatus: payload.targets.main.runtimeStatus } : undefined,\n      \"workflow-test\": record(payload.targets[\"workflow-test\"]) ? { status: payload.targets[\"workflow-test\"].status, runtimeStatus: payload.targets[\"workflow-test\"].runtimeStatus } : undefined,\n    } : undefined;\n    const names = (value) => Array.isArray(value) ? value.filter((name) => typeof name === \"string\" && name.length <= 200).slice(0, 200) : [];\n    const runtimeEvidence = Object.fromEntries([\"main\", \"workflow-test\"].map((target) => {\n      const evidence = payload.runtimeEvidence?.[target];\n      return [target, record(evidence) && !evidence.unavailable ? { agents: names(evidence.agents), tools: names(evidence.tools), skills: names(evidence.skills), mcp: names(evidence.mcp) } : { unavailable: \"Plugin runtime inventory is unavailable\" }];\n    }));\n    return { content: JSON.stringify({\n      project,\n      pluginName: typeof payload.pluginName === \"string\" ? payload.pluginName : undefined,\n      source: record(payload.source) ? payload.source : undefined,\n      resolved: record(payload.resolved) ? {\n        contentHash: typeof payload.resolved.contentHash === \"string\" ? payload.resolved.contentHash : undefined,\n        version: typeof payload.resolved.version === \"string\" ? payload.resolved.version : undefined,\n        revision: typeof payload.resolved.revision === \"string\" ? payload.resolved.revision : undefined,\n      } : undefined,\n      targets, runtimeEvidence,\n      warnings: Array.isArray(payload.warnings) ? payload.warnings.slice(0, 8) : [],\n    }), metadata: { title: \"Plugin Import status\" } };\n  },\n};"
+      }
+    },
+    {
+      "id": "register",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 540
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-plugin-register",
+        "scope": "global",
+        "content": "\nconst projectPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/;\nconst targets = new Set([\"main\", \"workflow-test\"]);\nconst kinds = new Set([\"agent\", \"command\", \"tool\", \"skill\", \"mcp\"]);\nconst provenanceKinds = new Set([\"npm\", \"git\", \"local\"]);\nconst statuses = new Set([\"verified\", \"stale\", \"runtime-unavailable\", \"unverified\", \"missing\"]);\nconst baseURL = () => (process.env.AGENT_SYSTEM_BFF_BASE_URL || \"http://agent-system-backend:8000\").replace(/\\/+$/, \"\");\nconst record = (value) => Boolean(value) && typeof value === \"object\" && !Array.isArray(value);\nconst text = (value, max, required = false) => { if (typeof value !== \"string\" || value.length > max || (required && !value.trim())) throw new Error(\"Plugin registration field is invalid\"); return value; };\nfunction registrationOf(value, project) {\n  if (!record(value) || value.scope !== \"project\" || value.project !== project || !targets.has(value.target)) throw new Error(\"Plugin registration scope or target is invalid\");\n  if (!record(value.provenance) || !provenanceKinds.has(value.provenance.kind)) throw new Error(\"Plugin provenance is invalid\");\n  if (!record(value.recognition) || ![\"partial\", \"complete\"].includes(value.recognition.status)) throw new Error(\"Plugin recognition is invalid\");\n  if (!Array.isArray(value.contributions) || value.contributions.length > 200) throw new Error(\"Plugin contributions are invalid\");\n  const contributions = value.contributions.map((item) => {\n    if (!record(item) || !kinds.has(item.kind) || !text(item.name, 200, true) || (item.status !== undefined && item.status !== \"unverified\")) throw new Error(\"Plugin contribution is invalid\");\n    return { kind: item.kind, name: item.name, ...(Array.isArray(item.toolNames) ? { toolNames: item.toolNames.slice(0, 200).map((name) => text(name, 200, true)) } : {}), ...(item.description !== undefined ? { description: text(item.description, 2000) } : {}), status: \"unverified\", ...(item.evidence !== undefined ? { evidence: text(item.evidence, 2000) } : {}) };\n  });\n  return { scope: \"project\", project, target: value.target, pluginName: text(value.pluginName, 101, true), ...(value.description !== undefined ? { description: text(value.description, 2000, true) } : {}), ...(value.package !== undefined ? { package: text(value.package, 214, true) } : {}), provenance: { kind: value.provenance.kind, source: text(value.provenance.source, 500, true), revision: text(value.provenance.revision, 200, true) }, recognition: { status: value.recognition.status, unavailable: Array.isArray(value.recognition.unavailable) ? value.recognition.unavailable.slice(0, 100).map((item) => text(item, 500)) : [] }, backgroundBehaviors: Array.isArray(value.backgroundBehaviors) ? value.backgroundBehaviors.slice(0, 50).map((item) => ({ kind: \"hook\", name: text(item.name, 200, true), description: text(item.description, 500, true) })) : [], contributions };\n}\nexport default { description: \"Register an authorized imported Plugin and read its project Catalog readiness.\", input: {\"type\":\"object\",\"properties\":{\"registration\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":600000}},\"required\":[\"registration\"],\"additionalProperties\":false}, async execute(args, context) {\n  const token = process.env.AGENT_SYSTEM_PLUGIN_REGISTRATION_TOKEN;\n  const directory = typeof context?.directory === \"string\" ? context.directory.replace(/\\\\/g, \"/\") : \"\";\n  const project = directory.match(/\\/(?:workflow\\/)?projects\\/([^/]+)\\/?$/)?.[1];\n  if (!token || !project || !projectPattern.test(project) || typeof context?.sessionID !== \"string\" || !context.sessionID) throw new Error(\"Canonical session Project context or registration credential is unavailable\");\n  const input = registrationOf(JSON.parse(args.registration), project);\n  const registrationEndpoint = new URL(\"/bff/opencode-plugin-contributions/register\", baseURL());\n  const registrationResponse = await fetch(registrationEndpoint, { method: \"POST\", headers: { \"content-type\": \"application/json\", authorization: \"Bearer \" + token, \"x-agent-system-workspace\": project }, body: JSON.stringify(input), signal: AbortSignal.timeout(30000) });\n  const registrationPayload = await registrationResponse.json().catch(() => undefined);\n  if (!registrationResponse.ok || !record(registrationPayload)) throw new Error(\"Plugin Contribution Catalog registration failed\");\n  const catalogEndpoint = new URL(\"/bff/workflow-resources\", baseURL());\n  catalogEndpoint.searchParams.set(\"project\", project);\n  catalogEndpoint.searchParams.set(\"includeGlobal\", \"false\");\n  const catalogResponse = await fetch(catalogEndpoint, { headers: { \"x-agent-system-workspace\": project }, signal: AbortSignal.timeout(30000) });\n  const catalogPayload = await catalogResponse.json().catch(() => undefined);\n  if (!catalogResponse.ok || !record(catalogPayload) || !Array.isArray(catalogPayload.pluginContributions)) throw new Error(\"Plugin Contribution Catalog read failed\");\n  const entry = catalogPayload.pluginContributions.find((item) => record(item) && item.pluginName === input.pluginName && item.scope === \"project\");\n  if (!entry) throw new Error(\"Imported Plugin is missing from the project Catalog\");\n  const targetStatuses = { main: statuses.has(entry.targetStatuses?.main) ? entry.targetStatuses.main : \"missing\", \"workflow-test\": statuses.has(entry.targetStatuses?.[\"workflow-test\"]) ? entry.targetStatuses[\"workflow-test\"] : \"missing\" };\n  const status = statuses.has(entry.status) ? entry.status : \"unverified\";\n  const groups = [\"agents\", \"tools\", \"skills\", \"mcp\"];\n  const contributions = groups.flatMap((group) => Array.isArray(entry.contributions?.[group]) ? entry.contributions[group].slice(0, 50).map((item) => record(item) ? { name: typeof item.name === \"string\" ? item.name.slice(0, 200) : \"\", availability: typeof item.availability === \"string\" ? item.availability.slice(0, 64) : \"unknown\" } : undefined) : []).filter(Boolean).slice(0, 200);\n  return { content: JSON.stringify({ pluginName: input.pluginName, scope: \"project\", project, status, targetStatuses, contributions: contributions.slice(0, 200) }), metadata: { title: \"Plugin Contribution Catalog status\" } };\n} };"
+      }
+    },
+    {
+      "id": "error-log",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 700
+      },
+      "data": {
+        "mode": "reference",
+        "name": "error_log_recent",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "plugin-discovery",
+      "type": "resource.skill",
+      "position": {
+        "x": 850,
+        "y": 860
+      },
+      "data": {
+        "mode": "reference",
+        "name": "plugin-discovery",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "parameters",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 1020
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-plugin-parameters-v2",
+        "scope": "global",
+        "content": "\nexport default {\n  description: \"依作者文件登錄參數定義，保留既有值，不啟動環境；回傳待補填名稱。\",\n  input: {\"type\":\"object\",\"properties\":{\"pluginName\":{\"type\":\"string\",\"pattern\":\"^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$\"},\"requirements\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":20000}},\"required\":[\"pluginName\",\"requirements\"],\"additionalProperties\":false},\n  async execute(args, context) {\n    const directory = typeof context?.directory === \"string\" ? context.directory.replace(/\\\\/g, \"/\") : \"\";\n    const project = directory.match(/\\/(?:workflow\\/)?projects\\/([^/]+)\\/?$/)?.[1];\n    if (!project || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(project) || !context?.sessionID) throw new Error(\"Canonical session Project context is unavailable\");\n    const parameters = JSON.parse(args.requirements);\n    if (!Array.isArray(parameters) || parameters.length > 100 || parameters.some(item => !item || typeof item !== \"object\" || \"value\" in item)) throw new Error(\"Only parameter definitions are accepted\");\n    const endpoint = new URL(\"/bff/projects/\" + encodeURIComponent(project) + \"/plugins/\" + encodeURIComponent(args.pluginName) + \"/environment-parameter-definitions\", process.env.AGENT_SYSTEM_BFF_BASE_URL || \"http://agent-system-backend:8000\");\n    const response = await fetch(endpoint, { method: \"POST\", headers: { \"content-type\": \"application/json\", \"x-agent-system-workspace\": project }, body: JSON.stringify({ parameters }), signal: AbortSignal.timeout(30000) });\n    const payload = await response.json().catch(() => undefined);\n    if (!response.ok || !Array.isArray(payload?.parameters) || !Array.isArray(payload?.missingRequired)) throw new Error(\"Plugin parameter definitions could not be recorded\");\n    return { content: JSON.stringify({ project, pluginName: args.pluginName, target: \"main\", parameters: payload.parameters, missingRequired: payload.missingRequired }), metadata: { title: \"Plugin 參數定義與待補填項目\" } };\n  },\n};"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "command-primary",
+      "source": "command",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "websearch-primary",
+      "source": "websearch",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "webfetch-primary",
+      "source": "webfetch",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "import-primary",
+      "source": "import",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "register-primary",
+      "source": "register",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "error-log-primary",
+      "source": "error-log",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "plugin-discovery-primary",
+      "source": "plugin-discovery",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "find-plugin-parameters-primary",
+      "source": "parameters",
+      "target": "primary",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    }
+  ],
+  "metadata": {
+    "system": true,
+    "deletable": false,
+    "role": "workflow-plugin-finder"
+  },
+  "variables": {},
+  "createdAt": "2026-08-03T06:00:00.000Z",
+  "updatedAt": "2026-10-27T00:00:00.000Z"
+}

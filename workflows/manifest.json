@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "agent-system.default-workflows-manifest.v1",
+  "sourceCommit": "7f5c7a56bce02501547e2933bbefd7f4a745f0b9",
+  "workflowGeneratorSourceVersion": "0.0.30",
+  "systemSkillsSourceVersion": "1.0.9",
+  "workflows": [
+    {
+      "id": "workflow-agent-writer",
+      "uuid": "00000000-0000-4000-8000-000000000001",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.9",
+      "file": "workflows/workflow-agent-writer.json",
+      "sha256": "eadc52a53b01bb6c358bbf1db7381974d646f447a6ea2a6b7c1cf9240641829b"
+    },
+    {
+      "id": "workflow-command-writer",
+      "uuid": "00000000-0000-4000-8000-000000000002",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.9",
+      "file": "workflows/workflow-command-writer.json",
+      "sha256": "c65145c37c8ea138e4c40555192ca4a797fce330492f7224912533e3551c2df0"
+    },
+    {
+      "id": "workflow-file-preview-editor",
+      "uuid": "00000000-0000-4000-8000-000000000003",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.8",
+      "file": "workflows/workflow-file-preview-editor.json",
+      "sha256": "3d5279bf8e45464107787d265e8b8a153c86c90fe0f7073f86eb0387e99a09b8"
+    },
+    {
+      "id": "workflow-generator",
+      "uuid": "00000000-0000-4000-8000-000000000004",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.30",
+      "file": "workflows/workflow-generator.json",
+      "sha256": "da5426eea00b40ee63d6eb8a56210046cd3fc94964e8a7c79f3c7ea5a50755c6"
+    },
+    {
+      "id": "workflow-node-prompt-writer",
+      "uuid": "00000000-0000-4000-8000-000000000006",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.9",
+      "file": "workflows/workflow-node-prompt-writer.json",
+      "sha256": "27f6456b4b8146752465809581879002bb4edae2a553e8914d5741b976efc21d"
+    },
+    {
+      "id": "workflow-plugin-finder",
+      "uuid": "00000000-0000-4000-8000-000000000007",
+      "version": "2.0.0",
+      "sourceVersion": "0.1.9",
+      "file": "workflows/workflow-plugin-finder.json",
+      "sha256": "e26fa76f2191c4c44c353be43de0da7ab18495855c4957e37a87ae9ba7784bb1"
+    },
+    {
+      "id": "workflow-skill-creator",
+      "uuid": "00000000-0000-4000-8000-000000000009",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.9",
+      "file": "workflows/workflow-skill-creator.json",
+      "sha256": "36c45c629d43e7cc8aeede28f9b653b915b90ca8e56fb4bbef13ce5a0d31de65"
+    },
+    {
+      "id": "workflow-skill-finder",
+      "uuid": "00000000-0000-4000-8000-000000000010",
+      "version": "2.0.0",
+      "sourceVersion": "0.1.3",
+      "file": "workflows/workflow-skill-finder.json",
+      "sha256": "2a501a0e320548e800b88d23a024a4c848cd8df0014bd323781845fb55d4d8e1"
+    },
+    {
+      "id": "workflow-skill-writer",
+      "uuid": "00000000-0000-4000-8000-000000000011",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.9",
+      "file": "workflows/workflow-skill-writer.json",
+      "sha256": "5cfd9ecf1331b96020071d9306927d76ba62919b218a2416ea560a9e263facd0"
+    },
+    {
+      "id": "workflow-tool-writer",
+      "uuid": "00000000-0000-4000-8000-000000000012",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.9",
+      "file": "workflows/workflow-tool-writer.json",
+      "sha256": "25cc84e613e1b3bdc38f82c3bac29c010cb2848183599d33317fec29e2090b94"
+    },
+    {
+      "id": "workflow-updater",
+      "uuid": "00000000-0000-4000-8000-000000000013",
+      "version": "2.0.0",
+      "sourceVersion": "0.0.13",
+      "file": "workflows/workflow-updater.json",
+      "sha256": "06318a922a780a8ce39f0e2bddaed40644c60601faa019a1f09cdd46b0861eb6"
+    }
+  ]
+}

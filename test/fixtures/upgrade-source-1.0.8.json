@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "agent-system.system-skills-upgrade-source-fixture.v1",
+  "version": "1.0.8",
+  "skills": ["plugin-discovery", "workflow-assembly", "resource-authoring"],
+  "installedFiles": {
+    "plugin-discovery": { "SKILL.md": "fd56a9c716e3d18ca7702c147068778622d6f7be6afb98548b0d33466726d5ed" },
+    "workflow-assembly": { "SKILL.md": "38aeae53d9b4ba116c32c0a7572ca7c544cc6876a216ca462af6a78753b86d2c" },
+    "resource-authoring": { "SKILL.md": "525f245a29a8dcdc421a7c51551ee2817c05b901b82d2031493f24a2dd543e97" }
+  }
+}

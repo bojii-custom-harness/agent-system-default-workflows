@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/workflow.schema.json",
+  "title": "Agent System Default Workflow source",
+  "type": "object",
+  "required": ["schemaVersion", "id", "uuid", "version", "name", "scope", "nodes", "edges", "createdAt", "updatedAt"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.workflow.v3" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$" },
+    "uuid": { "type": "string", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" },
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+    "generatedBySystemVersion": { "type": "string" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "scope": { "enum": ["global", "project"] },
+    "project": { "type": "string", "minLength": 1 },
+    "nodes": { "type": "array", "maxItems": 500, "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "maxItems": 2000, "items": { "$ref": "#/$defs/edge" } },
+    "variables": { "type": "object" },
+    "metadata": { "type": "object" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    { "if": { "properties": { "scope": { "const": "project" } } }, "then": { "required": ["project"] } },
+    { "if": { "properties": { "scope": { "const": "global" } } }, "then": { "not": { "required": ["project"] } } }
+  ],
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "position", "data"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$" },
+        "type": { "enum": ["resource.agent", "resource.command", "resource.skill", "resource.tool", "resource.mcp", "resource.plugin", "action.prompt", "action.command", "action.restart", "trigger.manual"] },
+        "position": { "type": "object", "required": ["x", "y"], "properties": { "x": { "type": "number" }, "y": { "type": "number" } }, "additionalProperties": false },
+        "data": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "enum": ["resource.agent", "resource.command", "resource.skill", "resource.tool", "resource.mcp", "resource.plugin"] } } },
+          "then": {
+            "properties": {
+              "data": {
+                "required": ["mode", "name", "scope"],
+                "properties": {
+                  "mode": { "enum": ["managed", "reference"] },
+                  "name": { "type": "string", "minLength": 1 },
+                  "scope": { "enum": ["global", "project"] }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "source", "target", "kind"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$" },
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "kind": { "enum": ["capability", "delegation", "primary-link"] },
+        "sourceHandle": { "type": "string" },
+        "targetHandle": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

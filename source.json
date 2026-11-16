@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "agent-system.default-workflow-source.v1",
+  "sourceRepository": "Agent System",
+  "sourceCommit": "7f5c7a56bce02501547e2933bbefd7f4a745f0b9",
+  "workflowCount": 11,
+  "systemSkillIds": [
+    "plugin-discovery",
+    "workflow-assembly",
+    "resource-authoring"
+  ],
+  "workflowGeneratorSourceVersion": "0.0.30",
+  "systemSkillsSourceVersion": "1.0.9",
+  "contentVersion": "2.0.0"
+}

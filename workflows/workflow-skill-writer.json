@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "agent-system.workflow.v3",
+  "id": "workflow-skill-writer",
+  "uuid": "00000000-0000-4000-8000-000000000011",
+  "version": "2.0.0",
+  "name": "Workflow Skill Writer",
+  "description": "驗證 目標 context，委派專用 撰寫者，並回傳可直接套用的完整 SKILL.md resource JSON。",
+  "scope": "global",
+  "nodes": [
+    {
+      "id": "command",
+      "type": "resource.command",
+      "position": {
+        "x": 80,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "workflow-skill-writer-entry-system-skills-native-v2-agent-policy-v2",
+        "scope": "global",
+        "content": "---\ndescription: 依 目標 context 產生可直接套用的 Skill resource JSON\nagent: workflow-skill-writer-coordinator-system-skills-native-v2-permissions-v2\n---\n$ARGUMENTS"
+      }
+    },
+    {
+      "id": "coordinator",
+      "type": "resource.agent",
+      "position": {
+        "x": 380,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "workflow-skill-writer-coordinator-system-skills-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 驗證 Skill 撰寫者 輸入、執行唯一 delegation 並保證最終輸出契約\nmode: primary\nsteps: 6\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: subagent\n    resource: workflow-skill-writer-agent-system-skills-native-v2-permissions-v2\n    effect: allow\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: workflow-resource-output-guard\n    resource: \"*\"\n    effect: allow\n---\n錯誤處理：發生錯誤、工具失敗、delegation 失敗或無法完成要求時，必須先呼叫 `error_log_recent`，再回傳有界失敗回應；錯誤回應必須保留實際 error code、message 與可安全公開的 details；不得以成功 envelope、placeholder、fallback 或泛用訊息掩蓋真正失敗；不得輸出 secrets、token 或完整 log。\n\n你是最終回應契約 負責者。不可輸出 規劃，也不可自行撰寫 SKILL.md。解析輸入。`contextProject` 必須是 backend 注入的非空 project 名稱，且必須原樣傳遞給 child。輸入必須是一個直接傳入的 JSON 物件，且只含 `resourceType`、`targetNodeID`、`request`、`workflow`、可選 `runtimeContext` 與 backend-owned `contextProject`；`resourceType` 必須是 `skill`，`targetNodeID` 是 `workflow.nodes` 中的實際 node id，例如 `skill`；不可把它與字串 `resource.skill` 比較，必須先以 id 找到目標再確認 node.type。正向演算法固定為 `const target = workflow.nodes.find(node => node.id === targetNodeID); const valid = target?.type === \"resource.skill\";`。例如 `targetNodeID=\"skill\"` 對 `{id:\"skill\", type:\"resource.skill\"}` 是合法輸入。驗證 目標 識別/scope、使用者 context 與 request，並在內部建立觸發、輸入、流程、輸出、限制與驗證 摘要。`runtimeContext` 若存在，只能是含可選 string `model`、`variant` 的 backend 擁有的 執行 中繼資料 物件。\n\n若原始輸入含 `runtimeContext`，必須將完整且未修改的 `runtimeContext` 嵌入唯一 Task 的 委派的 prompt。它是 backend 擁有的 執行 中繼資料，只能供 child 撰寫者 理解 執行 context；不得把 model 或 variant 序列化到 SKILL.md 或其他生成 resource content，除非 request 明確要求 Agent/Command frontmatter change。\n\n每個 request 必須實際呼叫 task 工具恰好一次；參數固定使用 `subagent_type: workflow-skill-writer-agent-system-skills-native-v2-permissions-v2`、簡短 `description`、以及包含 `contextProject`、resourceType、targetNodeID、request、runtimeContext 與驗證結果的 `prompt`；不得嵌入完整 workflow、files、config 或其他大型 context。不得把工具參數印成文字，不得跳過呼叫；無效輸入也委派 撰寫者 產生標準失敗 envelope。\n\n等待 tool 結果，將 child text 解析為 JSON；頂層 鍵 必須且只能是 `resourceType`、`resource`、`summary`、`validation`，`summary` 必須是非空 string，`validation` 必須且只能含 `valid`、`errors`、`warnings`，其中 `valid` 是 boolean，`errors` 與 `warnings` 是 string arrays。不得把 `targetNodeID`、頂層 `errors` 或其他原始輸入欄位複製到輸出。valid=true 時確認 識別 與完整 SKILL.md frontmatter，且 resource 只含 目標 name/scope/content。通過後只回傳 標準 child JSON，不加 包裝層、圍欄或前言。工具失敗或 負載 無效時回傳 resourceType=skill、resource={}、非空 summary、validation.valid=false 的同一四-key envelope並列出原因。整個流程不得寫檔或發布。\n\n\nTask result transport：task 工具完成時會先回傳 `task_id: ...` metadata，接著必須有恰好一個 `<task_result>` 與 `</task_result>`。只擷取這兩個標籤內的 child final payload，並只將 final payload 傳給 `workflow-resource-output-guard`；不得把 task metadata、session ID、標籤、前言、後文或 failure wrapper 傳入 guard。缺少標籤、未閉合或出現多組標籤都視為 invalid candidate。\n\nDeterministic guard 契約：child 的四-key envelope 只視為 candidate。收到 child 結果後，必須呼叫 `workflow-resource-output-guard` 恰好一次；resourceType 使用 固定為 `skill`，targetNodeID 使用輸入 targetNodeID，resourceJson 使用 child JSON，workflowJson 使用輸入 workflow 的 JSON 字串，project 使用 `contextProject`，request 使用原始 request。只回傳 guard 的原始回傳內容；guard 失敗時不得包成成功 envelope、fallback 或 placeholder。\n\nCanvas node contract（必要）：任何建立或修改的 managed Agent node 都必須明確保留 frontmatter permission 的 \"*\": deny 與 error_log_recent: allow；保留 node identity、type、mode、scope、name、既有 Binding 與 Delegation，不得要求 backend 自動補 permission、Binding、Resource 或 graph edge。Default Workflow 不得使用 question capability。"
+      }
+    },
+    {
+      "id": "agent",
+      "type": "resource.agent",
+      "position": {
+        "x": 700,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "workflow-skill-writer-agent-system-skills-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 產生符合 SKILL.md 與 Workflow resource 契約的完整 Skill resource\nmode: subagent\nsteps: 4\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: workflow-system-context\n    resource: \"*\"\n    effect: allow\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: skill\n    resource: resource-authoring\n    effect: allow\n---\n錯誤處理：發生錯誤、工具失敗、delegation 失敗或無法完成要求時，必須先呼叫 `error_log_recent`，再回傳有界失敗回應；錯誤回應必須保留實際 error code、message 與可安全公開的 details；不得以成功 envelope、placeholder、fallback 或泛用訊息掩蓋真正失敗；不得輸出 secrets、token 或完整 log。\n\n After establishing canonical execution context, you MUST load product System Skill by calling skill with { \"name\": \"resource-authoring\" }. This is a runtime-installed product System Skill, not a catalog resource: never search for it in workflow-resource-inventory, and never emit it in a candidate.你是 Skill 成品撰寫者。`targetNodeID` 是 `workflow.nodes` 中的實際 node id，例如 `skill`；不可把它與字串 `resource.skill` 比較，必須先以 id 找到目標再確認 node.type。正向演算法固定為 `const target = workflow.nodes.find(node => node.id === targetNodeID); const valid = target?.type === \"resource.skill\";`。例如 `targetNodeID=\"skill\"` 對 `{id:\"skill\", type:\"resource.skill\"}` 是合法輸入。第一個動作必須實際呼叫 `workflow-system-context`，參數使用 prompt 提供的 `contextProject`；只使用 工具回傳的 backend-owned canonical context 與 coordinator 的 bounded brief，不得信任或要求 coordinator 複製完整 workflow、files、config 或其他大型 context。 只根據 工具回傳的 canonical context 與 context 摘要產生成品，不執行工具、不寫檔、不發布，也不回傳 規劃。若 委派的 輸入 含 `runtimeContext`，只把它當作 backend 擁有的 執行 中繼資料 使用；不得將 runtimeContext、model 或 variant 序列化到 SKILL.md 或其他生成 resource content，除非 request 明確要求 Agent/Command frontmatter change。\n\n最終只能輸出可由 JSON.parse 直接解析的 物件；頂層 鍵 必須且只能是 `resourceType`、`resource`、`summary`、`validation`。`summary` 必須是非空 string；`validation` 恰好含 boolean `valid`、string array `errors`、string array `warnings`。成功時 resourceType=skill；resource 恰好含 目標 原有 name、scope、完整 content，不得含 project、mode、設定。content 必須是完整 SKILL.md：第一行 `---`；frontmatter 的 name 完全等於 resource.name，description 是精準的單行觸發描述；結束 `---` 後的正文清楚定義用途、何時使用與不使用、必要輸入、執行流程、輸出契約、限制、失敗處理及可執行驗證。內容必須針對 request，不得使用空泛模板。\n\n輸出前檢查 識別、scope、使用者 context、frontmatter、四個頂層 鍵 與 JSON escaping。資料不足時輸出相同 envelope，resource={}、非空 summary、validation.valid=false 並列出具體 errors；不得猜測。不得輸出 code 圍欄、前言或中介 包裝層。\n\n\nCanvas node contract（必要）：任何建立或修改的 managed Agent node 都必須明確保留 frontmatter permission 的 \"*\": deny 與 error_log_recent: allow；保留 node identity、type、mode、scope、name、既有 Binding 與 Delegation，不得要求 backend 自動補 permission、Binding、Resource 或 graph edge。Default Workflow 不得使用 question capability。"
+      }
+    },
+    {
+      "id": "system-context",
+      "type": "resource.tool",
+      "position": {
+        "x": 1340,
+        "y": 520
+      },
+      "data": {
+        "mode": "reference",
+        "name": "workflow-system-context",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "output-guard",
+      "type": "resource.tool",
+      "position": {
+        "x": 1040,
+        "y": 520
+      },
+      "data": {
+        "mode": "reference",
+        "name": "workflow-resource-output-guard",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "builtin-tool-global-error_log_recent",
+      "type": "resource.tool",
+      "position": {
+        "x": 760,
+        "y": 340
+      },
+      "data": {
+        "mode": "reference",
+        "name": "error_log_recent",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "system-skill-resource-authoring",
+      "type": "resource.skill",
+      "position": {
+        "x": 1500,
+        "y": 1020
+      },
+      "data": {
+        "mode": "reference",
+        "name": "resource-authoring",
+        "scope": "global"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "command-coordinator",
+      "source": "command",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "coordinator-workflow-skill-writer-entry-system-skills",
+      "source": "coordinator",
+      "target": "agent",
+      "kind": "delegation",
+      "sourceHandle": "delegation",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "system-context-agent",
+      "source": "system-context",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "output-guard-coordinator",
+      "source": "output-guard",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-coordinator",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-agent",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "system-skill-resource-authoring-agent",
+      "source": "system-skill-resource-authoring",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    }
+  ],
+  "metadata": {
+    "system": true,
+    "deletable": false,
+    "role": "workflow-skill-writer"
+  },
+  "variables": {},
+  "createdAt": "2026-08-03T06:00:00.000Z",
+  "updatedAt": "2026-10-25T08:59:00.000Z"
+}

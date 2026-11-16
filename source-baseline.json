@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "agent-system.default-workflow-source-baseline.v1",
+  "sourceCommit": "7f5c7a56bce02501547e2933bbefd7f4a745f0b9",
+  "workflows": [
+    {
+      "id": "workflow-agent-writer",
+      "uuid": "00000000-0000-4000-8000-000000000001",
+      "sourceVersion": "0.0.9",
+      "canonicalSha256": "e5605f2fe0e7d0bc6c97b33999036329527b372f25203cede70361d7c79755e0"
+    },
+    {
+      "id": "workflow-command-writer",
+      "uuid": "00000000-0000-4000-8000-000000000002",
+      "sourceVersion": "0.0.9",
+      "canonicalSha256": "cd000b87def67c241730e431c5337572ab48142c4f6ecd3344bf074b479b1a8b"
+    },
+    {
+      "id": "workflow-file-preview-editor",
+      "uuid": "00000000-0000-4000-8000-000000000003",
+      "sourceVersion": "0.0.8",
+      "canonicalSha256": "b4c2abc9d7a7f28e615e01331c42b40db89ae810d403484dfb79494c211963a2"
+    },
+    {
+      "id": "workflow-generator",
+      "uuid": "00000000-0000-4000-8000-000000000004",
+      "sourceVersion": "0.0.30",
+      "canonicalSha256": "fb520a83a9aefb3d79e04f0f11c22f5796a4c4ba3ae544e3977f20e0b88600ac"
+    },
+    {
+      "id": "workflow-node-prompt-writer",
+      "uuid": "00000000-0000-4000-8000-000000000006",
+      "sourceVersion": "0.0.9",
+      "canonicalSha256": "48bd803c7859c15dd6944bf70693a6ba6b59d23c5dd5accbb26194239a8f98c9"
+    },
+    {
+      "id": "workflow-plugin-finder",
+      "uuid": "00000000-0000-4000-8000-000000000007",
+      "sourceVersion": "0.1.9",
+      "canonicalSha256": "867a471f18346573ef427bbbb13a2caebdea5d58153dd921623644f2e8d8f24d"
+    },
+    {
+      "id": "workflow-skill-creator",
+      "uuid": "00000000-0000-4000-8000-000000000009",
+      "sourceVersion": "0.0.9",
+      "canonicalSha256": "648b9a221107a7342cf0ce08a2f4080a59b7c9ae423af98b26b6eed749f86073"
+    },
+    {
+      "id": "workflow-skill-finder",
+      "uuid": "00000000-0000-4000-8000-000000000010",
+      "sourceVersion": "0.1.3",
+      "canonicalSha256": "4f2cd9cf45ae3867a692ad341094a22169f0d89f6b7a293d951c081a01c86c28"
+    },
+    {
+      "id": "workflow-skill-writer",
+      "uuid": "00000000-0000-4000-8000-000000000011",
+      "sourceVersion": "0.0.9",
+      "canonicalSha256": "7f2c198ac27f0a3882531fd50afa19e5773bae14ea9a2a10113f93c48ce5b7b0"
+    },
+    {
+      "id": "workflow-tool-writer",
+      "uuid": "00000000-0000-4000-8000-000000000012",
+      "sourceVersion": "0.0.9",
+      "canonicalSha256": "80504852041b1297eb6e4b635b2651cf88bc8ad9bfa5c22f3e6d789ed021e36e"
+    },
+    {
+      "id": "workflow-updater",
+      "uuid": "00000000-0000-4000-8000-000000000013",
+      "sourceVersion": "0.0.13",
+      "canonicalSha256": "c68f328f16ba17ac6a8f46ee438e0a843a11b47722cd8541489f299219e18744"
+    }
+  ],
+  "skills": [
+    {
+      "id": "plugin-discovery",
+      "sourceVersion": "1.0.7",
+      "sha256": "fd56a9c716e3d18ca7702c147068778622d6f7be6afb98548b0d33466726d5ed"
+    },
+    {
+      "id": "workflow-assembly",
+      "sourceVersion": "1.0.9",
+      "sha256": "5c10c5880590f76e416f907bcf14ba73aeff6e3e9fb6852993e6a58f5e92a02c"
+    },
+    {
+      "id": "resource-authoring",
+      "sourceVersion": "1.0.8",
+      "sha256": "525f245a29a8dcdc421a7c51551ee2817c05b901b82d2031493f24a2dd543e97"
+    }
+  ],
+  "legacyUpgradesFrom": {
+    "1.0.8": {
+      "workflow-assembly": {
+        "SKILL.md": "38aeae53d9b4ba116c32c0a7572ca7c544cc6876a216ca462af6a78753b86d2c"
+      }
+    },
+    "1.0.7": {
+      "plugin-discovery": {
+        "SKILL.md": "fd56a9c716e3d18ca7702c147068778622d6f7be6afb98548b0d33466726d5ed"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "bd2d4fb17650edb7becabd949fd1965526650a28c064b43cd7cfa5d17330119c"
+      },
+      "resource-authoring": {
+        "SKILL.md": "e302b7d823150574a49e45c3beac59c6cfb0c164a697cd39b57a945e880da98f"
+      }
+    },
+    "1.0.6": {
+      "plugin-discovery": {
+        "SKILL.md": "699012fc1d8391ded8503d3f5f5201f53dbb53b0eef7a13a7917ac5b4bcec0b6"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "613e3faa3af223895f93971f0af4d3dfaa3ebd550abd600931dd0e0a36b18188"
+      },
+      "resource-authoring": {
+        "SKILL.md": "ef4be28bbb976d9209f85589f215215b12b1d27dc022c4fa6602c4d59ef35c55"
+      }
+    },
+    "1.0.0": {
+      "plugin-discovery": {
+        "SKILL.md": "907de0e25e64fbf2ef455b5a1727f742bb3b3e4bf2e94b73c187ebe346a356d3"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "03f8805f484aba5fba829f13a0d2462dd5a3504d6fbc8ba71c098fd18bbfd790"
+      },
+      "resource-authoring": {
+        "SKILL.md": "40cdda7bd34d6bb16d7a09a509b1ee6fba6ac7b9e89839003f83ba461c544f82"
+      }
+    },
+    "1.0.1": {
+      "plugin-discovery": {
+        "SKILL.md": "334338ffd96d05c4dabe41ffc95af9e0f52bef8f30a5ecc4a2ee1304df624e43"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "7ef9f6e6b4e40ea7e962445c612857a98df82898825ffa21f668f078d66087d5"
+      },
+      "resource-authoring": {
+        "SKILL.md": "599e2f24451416f59ecdab1e50d1cded7f85c87a150207eac733a57fe633e477"
+      }
+    },
+    "1.0.2": {
+      "plugin-discovery": {
+        "SKILL.md": "670eb2805b6d55dfd00d950c8641d58330fd51fc37e8d19c1e18af8d360e83bc"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "ddfc8f8587f2558c75672b4ed38e6dc59b6b8e77922f4f49bd61ef4d1e79148e"
+      },
+      "resource-authoring": {
+        "SKILL.md": "50516fa64fb46ec7241948cc7ecc3dbf070d3b0618078d1011e4fe62753a8e8a"
+      }
+    },
+    "1.0.3": {
+      "plugin-discovery": {
+        "SKILL.md": "301bcbf027aa38e6fded5445926d7257cd247d048eefc32eb6d3de641e0e12ab"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "d28185f48f459285bdc84910b3348956b35356b57505215f32cdad0b67768e4f"
+      },
+      "resource-authoring": {
+        "SKILL.md": "77233ec63e86e852592fccf2576cc9131b3855ff23c8e9d1760740ff33fde93f"
+      }
+    },
+    "1.0.5": {
+      "plugin-discovery": {
+        "SKILL.md": "aba045ba3c683536a51648d9735354ede2da31506315075d1673cfae89b2002d"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "7541877699818df441533f880d2c39db282a22cc4c7f7a8d022642f3484ae4ea"
+      },
+      "resource-authoring": {
+        "SKILL.md": "2934f9c78a8c6744fdda2c59a5228d3a9cd177261682f630f2ad3373e2229d01"
+      }
+    },
+    "1.0.4": {
+      "plugin-discovery": {
+        "SKILL.md": "d5d6b1a8fcb10ba28b553e434e8272945b072d69602cb991b3fe781443f33c8c"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "687b0abda5bb84411bc5514868fc4418ef5a884e200742c1f3b9d4d2321a2ca2"
+      },
+      "resource-authoring": {
+        "SKILL.md": "4081bb3fc475a96343466042640b3e4f39edbf355581d0a9acae4510cb260b95"
+      }
+    }
+  }
+}

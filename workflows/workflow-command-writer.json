@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "agent-system.workflow.v3",
+  "id": "workflow-command-writer",
+  "uuid": "00000000-0000-4000-8000-000000000002",
+  "version": "2.0.0",
+  "name": "Workflow Command Writer",
+  "description": "驗證 Workflow entry graph，委派專用 撰寫者，並回傳可直接套用的 Command resource JSON。",
+  "scope": "global",
+  "nodes": [
+    {
+      "id": "command",
+      "type": "resource.command",
+      "position": {
+        "x": 80,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "workflow-command-writer-entry-system-skills-native-v2-agent-policy-v2",
+        "scope": "global",
+        "content": "---\ndescription: 依 Workflow entry graph 產生可直接套用的 Command resource JSON\nagent: workflow-command-writer-coordinator-system-skills-native-v2-permissions-v2\n---\n$ARGUMENTS"
+      }
+    },
+    {
+      "id": "coordinator",
+      "type": "resource.agent",
+      "position": {
+        "x": 380,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "workflow-command-writer-coordinator-system-skills-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 驗證 Command 撰寫者 輸入、執行唯一 delegation 並保證最終輸出契約\nmode: primary\nsteps: 6\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: subagent\n    resource: workflow-command-writer-agent-system-skills-native-v2-permissions-v2\n    effect: allow\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: workflow-resource-output-guard\n    resource: \"*\"\n    effect: allow\n---\n錯誤處理：發生錯誤、工具失敗、delegation 失敗或無法完成要求時，必須先呼叫 `error_log_recent`，再回傳有界失敗回應；錯誤回應必須保留實際 error code、message 與可安全公開的 details；不得以成功 envelope、placeholder、fallback 或泛用訊息掩蓋真正失敗；不得輸出 secrets、token 或完整 log。\n\n你是最終回應契約 負責者。不可輸出 規劃，也不可自行撰寫 Command content。解析輸入。`contextProject` 必須是 backend 注入的非空 project 名稱，且必須原樣傳遞給 child。輸入必須是一個直接傳入的 JSON 物件，且只以 `resourceType`、`targetNodeID`、`request`、`workflow` 與可選的 `runtimeContext` 與 backend-owned `contextProject` 作為事實來源；`resourceType` 必須是 `command`，targetNodeID 必須指向 Workflow 唯一的 `resource.command`。驗證 目標 識別、scope、唯一 command-to-primary edge、entry Agent 與既有 frontmatter，並在內部建立 摘要。`runtimeContext` 若存在，只能是含可選 string `model`、`variant` 的 backend 擁有的 執行 中繼資料 物件。\n\n若原始輸入含 `runtimeContext`，必須將完整且未修改的 `runtimeContext` 嵌入唯一 Task 的 委派的 prompt。它是 backend 擁有的 執行 中繼資料，只能供 child 撰寫者 理解 執行 context；不得把 model 或 variant 序列化到生成的 resource content，除非 request 明確要求 Agent/Command frontmatter change。\n\n每個 request 必須實際呼叫 task 工具恰好一次；參數固定使用 `subagent_type: workflow-command-writer-agent-system-skills-native-v2-permissions-v2`、簡短 `description`、以及包含 `contextProject`、resourceType、targetNodeID、request、runtimeContext 與驗證結果的 `prompt`；不得嵌入完整 workflow、files、config 或其他大型 context。不得把工具參數印成文字，不得跳過呼叫；輸入無效時仍委派 撰寫者 產生標準失敗 envelope。\n\n等待 tool 結果並驗證 直接 JSON 四-key envelope；valid=true 時確認 resource 識別、frontmatter agent 與 `$ARGUMENTS`，且不得把 structured 輸入 包成其他 傳輸。通過後只回傳 child JSON，不加 包裝層、圍欄或前言。工具失敗或 負載 無效時回傳 resourceType=command、resource={}、validation.valid=false 的四-key envelope並列出原因。整個流程不得寫入或發布資源。\n\n\nTask result transport：task 工具完成時會先回傳 `task_id: ...` metadata，接著必須有恰好一個 `<task_result>` 與 `</task_result>`。只擷取這兩個標籤內的 child final payload，並只將 final payload 傳給 `workflow-resource-output-guard`；不得把 task metadata、session ID、標籤、前言、後文或 failure wrapper 傳入 guard。缺少標籤、未閉合或出現多組標籤都視為 invalid candidate。\n\nDeterministic guard 契約：child 的四-key envelope 只視為 candidate。收到 child 結果後，必須呼叫 `workflow-resource-output-guard` 恰好一次；resourceType 使用 固定為 `command`，targetNodeID 使用輸入 targetNodeID，resourceJson 使用 child JSON，workflowJson 使用輸入 workflow 的 JSON 字串，project 使用 `contextProject`，request 使用原始 request。只回傳 guard 的原始回傳內容；guard 失敗時不得包成成功 envelope、fallback 或 placeholder。\n\nCanvas node contract（必要）：任何建立或修改的 managed Agent node 都必須明確保留 frontmatter permission 的 \"*\": deny 與 error_log_recent: allow；保留 node identity、type、mode、scope、name、既有 Binding 與 Delegation，不得要求 backend 自動補 permission、Binding、Resource 或 graph edge。Default Workflow 不得使用 question capability。"
+      }
+    },
+    {
+      "id": "agent",
+      "type": "resource.agent",
+      "position": {
+        "x": 700,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "workflow-command-writer-agent-system-skills-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 產生符合 Command registry 與 Workflow V3 entry 契約的完整 Command resource\nmode: subagent\nsteps: 4\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: workflow-system-context\n    resource: \"*\"\n    effect: allow\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: skill\n    resource: resource-authoring\n    effect: allow\n---\n錯誤處理：發生錯誤、工具失敗、delegation 失敗或無法完成要求時，必須先呼叫 `error_log_recent`，再回傳有界失敗回應；錯誤回應必須保留實際 error code、message 與可安全公開的 details；不得以成功 envelope、placeholder、fallback 或泛用訊息掩蓋真正失敗；不得輸出 secrets、token 或完整 log。\n\n After establishing canonical execution context, you MUST load product System Skill by calling skill with { \"name\": \"resource-authoring\" }. This is a runtime-installed product System Skill, not a catalog resource: never search for it in workflow-resource-inventory, and never emit it in a candidate.你是 Command 成品撰寫者。第一個動作必須實際呼叫 `workflow-system-context`，參數使用 prompt 提供的 `contextProject`；只使用 工具回傳的 backend-owned canonical context 與 coordinator 的 bounded brief，不得信任或要求 coordinator 複製完整 workflow、files、config 或其他大型 context。 只根據 工具回傳的 canonical context 與 context 摘要產生成品，不執行工具、不寫檔、不發布，也不回傳 規劃。若 委派的 輸入 含 `runtimeContext`，只把它當作 backend 擁有的 執行 中繼資料 使用；不得將 runtimeContext、model 或 variant 序列化到 resource content，除非 request 明確要求 Agent/Command frontmatter change。\n\n最終只能輸出可由 JSON.parse 直接解析的四-key 物件：`resourceType`、`resource`、`summary`、`validation`。validation 恰好包含 valid、errors、warnings，型別依序為 boolean、string array、string array。成功時 resourceType 固定為 command；resource 恰好包含 目標 原有的 name、scope、完整 content，不可含 project、mode、設定 或其他 鍵。content 是完整 Command Markdown，frontmatter 必須含非空 description 與 `agent: <唯一 entry Agent name>`；目標 既有 frontmatter 的 model 與 variant 必須原樣保留，除非 request 明確要求修改 Agent/Command frontmatter，不得自行新增或改變。正文必須定義輸入、處理責任、輸出與失敗契約，並保留一個原樣 `$ARGUMENTS`。不得產生 shell command 或把 `$ARGUMENTS` 包成非 JSON 傳輸。\n\n輸出前檢查 識別、scope、唯一 entry Agent、frontmatter、`$ARGUMENTS`、四個頂層 鍵 與 JSON escaping。資料不足、command 不唯一或 entry edge 不合法時，輸出相同 envelope，resource={}、validation.valid=false 並列出具體 errors；不得猜測。不得輸出 code 圍欄、前言或中介 包裝層。\n\n\nCanvas node contract（必要）：任何建立或修改的 managed Agent node 都必須明確保留 frontmatter permission 的 \"*\": deny 與 error_log_recent: allow；保留 node identity、type、mode、scope、name、既有 Binding 與 Delegation，不得要求 backend 自動補 permission、Binding、Resource 或 graph edge。Default Workflow 不得使用 question capability。"
+      }
+    },
+    {
+      "id": "system-context",
+      "type": "resource.tool",
+      "position": {
+        "x": 1340,
+        "y": 520
+      },
+      "data": {
+        "mode": "reference",
+        "name": "workflow-system-context",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "output-guard",
+      "type": "resource.tool",
+      "position": {
+        "x": 1040,
+        "y": 520
+      },
+      "data": {
+        "mode": "reference",
+        "name": "workflow-resource-output-guard",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "builtin-tool-global-error_log_recent",
+      "type": "resource.tool",
+      "position": {
+        "x": 760,
+        "y": 340
+      },
+      "data": {
+        "mode": "reference",
+        "name": "error_log_recent",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "system-skill-resource-authoring",
+      "type": "resource.skill",
+      "position": {
+        "x": 1500,
+        "y": 1020
+      },
+      "data": {
+        "mode": "reference",
+        "name": "resource-authoring",
+        "scope": "global"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "command-coordinator",
+      "source": "command",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "coordinator-workflow-command-writer-entry-system-skills",
+      "source": "coordinator",
+      "target": "agent",
+      "kind": "delegation",
+      "sourceHandle": "delegation",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "system-context-agent",
+      "source": "system-context",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "output-guard-coordinator",
+      "source": "output-guard",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-coordinator",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-agent",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "system-skill-resource-authoring-agent",
+      "source": "system-skill-resource-authoring",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    }
+  ],
+  "metadata": {
+    "system": true,
+    "deletable": false,
+    "role": "workflow-command-writer"
+  },
+  "variables": {},
+  "createdAt": "2026-08-03T06:00:00.000Z",
+  "updatedAt": "2026-10-25T08:59:00.000Z"
+}

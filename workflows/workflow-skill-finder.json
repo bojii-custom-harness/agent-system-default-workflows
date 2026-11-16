@@ -1,0 +1,207 @@
+{
+  "schemaVersion": "agent-system.workflow.v3",
+  "id": "workflow-skill-finder",
+  "uuid": "00000000-0000-4000-8000-000000000010",
+  "version": "2.0.0",
+  "name": "Workflow Skill Finder",
+  "description": "透過 find-skills CLI 與作者來源尋找、安裝 Skill，產生共用的 Canvas reference node。",
+  "scope": "global",
+  "nodes": [
+    {
+      "id": "command",
+      "type": "resource.command",
+      "position": {
+        "x": 80,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "skill-finder-v4-agent-policy-v2",
+        "scope": "global",
+        "content": "---\ndescription: 尋找並安裝 Skill，登錄 Canvas node\nagent: skill-finder-agent-v3-native-v2-permissions-v2\n---\n$ARGUMENTS\n\n依使用者需求搜尋，明確指定安裝來源即開始安裝與節點登錄。若輸入是只有 request 欄位的 JSON，使用舊候選搜尋契約，只搜尋、不安裝。"
+      }
+    },
+    {
+      "id": "agent",
+      "type": "resource.agent",
+      "position": {
+        "x": 430,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "skill-finder-agent-v3-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 透過 CLI 與作者文件尋找、下載並登錄外部 Skill\nmode: primary\nsteps: 30\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: websearch\n    resource: \"*\"\n    effect: allow\n  - action: webfetch\n    resource: \"*\"\n    effect: allow\n  - action: find-skill-install\n    resource: \"*\"\n    effect: allow\n  - action: find-skill-register-node\n    resource: \"*\"\n    effect: allow\n  - action: skill\n    resource: find-skills\n    effect: allow\n  - action: shell\n    resource: npx skills find *\n    effect: allow\n---\n你是 Skill Finder。第一個 domain action 必須載入 find-skills Skill，再依其指引執行 npx skills find；也可以 websearch、webfetch 查詢 skills.sh、GitHub、GitLab、Bitbucket 的作者來源。Skill 必須有真實 SKILL.md，不把一般套件或 Tool 冒充 Skill。讀取作者說明，保留附屬檔案，不重新撰寫下載的 Skill。\n\n一般對話：只有需求時列出最多 8 個有來源的候選，等待選定；明確要求安裝 URL、owner/repo@skill 或 npx skills add 指令即為安裝授權，不重複確認。使用 find-skill-install 工具，source 可為 skills.sh 安裝頁、GitHub/GitLab/Bitbucket HTTPS repository，或 npx skills add owner/repo --skill name。這個工具實際執行 skills CLI，使用隔離暫存目錄並將結果安裝到目前 Project 的 main 與 workflow-test；不要直接在 shell 執行 add，避免只寫入單一環境或 Global。不要把 installCommand 當作已安裝證據。失敗時依回應修正來源；不能用 skipped 冒充本次已安裝。\n\n安裝成功後，你必須逐項產生 JSON Canvas node，並呼叫 find-skill-register-node 登錄；不能要求使用者手填。格式為 {\"id\":\"skill-實際名稱\",\"type\":\"resource.skill\",\"position\":{\"x\":0,\"y\":0},\"data\":{\"mode\":\"reference\",\"name\":\"實際安裝名稱\",\"scope\":\"project\"}}。只能使用工具回傳的 installed name。重試已安裝來源時可依 skipped name 補登錄節點，但必須以登錄成功回應確認。保留來源 metadata，不建立 managed 內容副本，不自動加入目前 Workflow 或授權 Binding。結尾列出已安裝 Skill、節點登錄結果與未完成項目，指引到 Workspace／Workflow 共用 Skill 管理重啟兩個環境。\n\n舊候選搜尋契約：若輸入是只有 request 欄位的 JSON，request 必須是非空且至多 800 字元；只載入 find-skills 並執行 npx skills find，最多三次，不安裝、不寫檔、不發布。只輸出 JSON {\"candidates\":[],\"summary\":\"\",\"validation\":{\"valid\":true,\"errors\":[],\"warnings\":[]}}。每個 candidate 只包含 name、description、source、installCommand、provenance、sourceType、可選 version、status；name 為最多 64 字元小寫 kebab-case，source 為實際搜尋結果的 https://skills.sh/ 或 https://www.skills.sh/ 頁面，status 固定 candidate，最多 8 個；installCommand 僅文字不執行。無有效結果回傳空陣列，不猜測來源。輸入或搜尋失敗時 validation.valid=false。\n\n錯誤處理：工具失敗或無法完成時先呼叫 error_log_recent，再回報 bounded error code、message；不得輸出 secrets、token 或完整 log。Canvas node contract for each managed Agent node：保留 node identity、type、mode、scope、name、既有 Binding 與 Delegation；managed Agent 必須保留 permission 的 \"*\": deny 與 error_log_recent: allow，不要求 backend 補寫 permission 或 graph edge。Default Workflow 不得使用 question capability。"
+      }
+    },
+    {
+      "id": "find-skills",
+      "type": "resource.skill",
+      "position": {
+        "x": 850,
+        "y": 80
+      },
+      "data": {
+        "mode": "reference",
+        "name": "find-skills",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "shell",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 220
+      },
+      "data": {
+        "mode": "reference",
+        "name": "shell",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "websearch",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 360
+      },
+      "data": {
+        "mode": "reference",
+        "name": "websearch",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "webfetch",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 500
+      },
+      "data": {
+        "mode": "reference",
+        "name": "webfetch",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "builtin-tool-global-error_log_recent",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 640
+      },
+      "data": {
+        "mode": "reference",
+        "name": "error_log_recent",
+        "scope": "global"
+      }
+    },
+    {
+      "id": "install",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 780
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-skill-install",
+        "scope": "global",
+        "content": "\nexport default {\n  description: \"使用 skills CLI 安裝已授權的遠端 Skill，保留附屬檔案並同步 main 與 workflow-test。\",\n  input: {\"type\":\"object\",\"properties\":{\"source\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":2048}},\"required\":[\"source\"],\"additionalProperties\":false},\n  async execute(args, context) {\n    const project = context.directory?.replace(/\\\\/g, \"/\").match(/\\/(?:workflow\\/)?projects\\/([^/]+)\\/?$/)?.[1];\n    if (!project || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(project) || !context.sessionID) throw new Error(\"Canonical session Project context is unavailable\");\n    const endpoint = new URL(\"/bff/projects/\" + encodeURIComponent(project) + \"/skills/import\", process.env.AGENT_SYSTEM_BFF_BASE_URL || \"http://agent-system-backend:8000\");\n    const response = await fetch(endpoint, { method: \"POST\", headers: { \"content-type\": \"application/json\", \"x-agent-system-workspace\": project }, body: JSON.stringify({ sources: [args.source] }), signal: AbortSignal.timeout(180000) });\n    const result = await response.json();\n    if (!response.ok) throw new Error(\"Skill import failed: \" + (result.error?.code || response.status));\n    return { content: JSON.stringify(result), metadata: { title: \"Skill CLI 安裝結果\" } };\n  },\n};"
+      }
+    },
+    {
+      "id": "register",
+      "type": "resource.tool",
+      "position": {
+        "x": 850,
+        "y": 920
+      },
+      "data": {
+        "mode": "managed",
+        "name": "find-skill-register-node",
+        "scope": "global",
+        "content": "\nexport default {\n  description: \"驗證並登錄 Agent 產出的已安裝 Skill JSON Canvas reference node。\",\n  input: {\"type\":\"object\",\"properties\":{\"nodeJson\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":10000}},\"required\":[\"nodeJson\"],\"additionalProperties\":false},\n  async execute(args, context) {\n    const project = context.directory?.replace(/\\\\/g, \"/\").match(/\\/(?:workflow\\/)?projects\\/([^/]+)\\/?$/)?.[1];\n    if (!project || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(project) || !context.sessionID) throw new Error(\"Canonical session Project context is unavailable\");\n    const endpoint = new URL(\"/bff/projects/\" + encodeURIComponent(project) + \"/skills/nodes\", process.env.AGENT_SYSTEM_BFF_BASE_URL || \"http://agent-system-backend:8000\");\n    const response = await fetch(endpoint, { method: \"POST\", headers: { \"content-type\": \"application/json\", \"x-agent-system-workspace\": project }, body: JSON.stringify({ node: JSON.parse(args.nodeJson) }), signal: AbortSignal.timeout(60000) });\n    const result = await response.json();\n    if (!response.ok) throw new Error(\"Skill node registration failed: \" + (result.error?.code || response.status));\n    return { content: JSON.stringify(result), metadata: { title: \"Skill Canvas node\" } };\n  },\n};"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "command-agent",
+      "source": "command",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "find-skills-agent",
+      "source": "find-skills",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "shell-agent",
+      "source": "shell",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "websearch-agent",
+      "source": "websearch",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "webfetch-agent",
+      "source": "webfetch",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-agent",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "install-agent",
+      "source": "install",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "register-agent",
+      "source": "register",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    }
+  ],
+  "metadata": {
+    "system": true,
+    "deletable": false,
+    "role": "workflow-skill-finder",
+    "consumer": "WorkflowSkillImportModal"
+  },
+  "variables": {},
+  "createdAt": "2026-08-06T01:14:34.795Z",
+  "updatedAt": "2026-10-28T00:00:00.000Z"
+}

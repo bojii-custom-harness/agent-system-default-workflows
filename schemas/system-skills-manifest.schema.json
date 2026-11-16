@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/system-skills-manifest.schema.json",
+  "title": "Agent System System Skills bundle manifest",
+  "type": "object",
+  "required": ["schemaVersion", "product", "version", "sourceVersion", "sourceCommit", "skills", "upgradesFrom"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.system-skills-manifest.v1" },
+    "product": { "const": "Agent System" },
+    "version": { "type": "string" },
+    "sourceVersion": { "type": "string" },
+    "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "skills": { "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": { "enum": ["plugin-discovery", "workflow-assembly", "resource-authoring"] } },
+    "upgradesFrom": {
+      "type": "object",
+      "patternProperties": {
+        "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 3,
+          "propertyNames": { "enum": ["plugin-discovery", "workflow-assembly", "resource-authoring"] },
+          "additionalProperties": { "type": "object", "required": ["SKILL.md"], "properties": { "SKILL.md": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }, "additionalProperties": false }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

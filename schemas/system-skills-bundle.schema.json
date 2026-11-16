@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/system-skills-bundle.schema.json",
+  "title": "Published Agent System product System Skills bundle",
+  "type": "object",
+  "required": ["schemaVersion", "version", "sourceVersion", "sourceCommit", "manifest", "skills"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.system-skills-bundle.v1" },
+    "version": { "type": "string" },
+    "sourceVersion": { "type": "string" },
+    "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "manifest": { "$ref": "system-skills-manifest.schema.json" },
+    "skills": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "size", "sha256", "content"],
+        "properties": {
+          "id": { "enum": ["plugin-discovery", "workflow-assembly", "resource-authoring"] },
+          "path": { "type": "string" },
+          "size": { "type": "integer", "minimum": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "content": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

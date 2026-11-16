@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "agent-system.system-skills-manifest.v1",
+  "product": "Agent System",
+  "version": "2.0.0",
+  "sourceVersion": "1.0.9",
+  "sourceCommit": "7f5c7a56bce02501547e2933bbefd7f4a745f0b9",
+  "skills": [
+    "plugin-discovery",
+    "workflow-assembly",
+    "resource-authoring"
+  ],
+  "upgradesFrom": {
+    "1.0.8": {
+      "plugin-discovery": {
+        "SKILL.md": "fd56a9c716e3d18ca7702c147068778622d6f7be6afb98548b0d33466726d5ed"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "38aeae53d9b4ba116c32c0a7572ca7c544cc6876a216ca462af6a78753b86d2c"
+      },
+      "resource-authoring": {
+        "SKILL.md": "525f245a29a8dcdc421a7c51551ee2817c05b901b82d2031493f24a2dd543e97"
+      }
+    },
+    "1.0.7": {
+      "plugin-discovery": {
+        "SKILL.md": "fd56a9c716e3d18ca7702c147068778622d6f7be6afb98548b0d33466726d5ed"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "bd2d4fb17650edb7becabd949fd1965526650a28c064b43cd7cfa5d17330119c"
+      },
+      "resource-authoring": {
+        "SKILL.md": "e302b7d823150574a49e45c3beac59c6cfb0c164a697cd39b57a945e880da98f"
+      }
+    },
+    "1.0.6": {
+      "plugin-discovery": {
+        "SKILL.md": "699012fc1d8391ded8503d3f5f5201f53dbb53b0eef7a13a7917ac5b4bcec0b6"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "613e3faa3af223895f93971f0af4d3dfaa3ebd550abd600931dd0e0a36b18188"
+      },
+      "resource-authoring": {
+        "SKILL.md": "ef4be28bbb976d9209f85589f215215b12b1d27dc022c4fa6602c4d59ef35c55"
+      }
+    },
+    "1.0.0": {
+      "plugin-discovery": {
+        "SKILL.md": "907de0e25e64fbf2ef455b5a1727f742bb3b3e4bf2e94b73c187ebe346a356d3"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "03f8805f484aba5fba829f13a0d2462dd5a3504d6fbc8ba71c098fd18bbfd790"
+      },
+      "resource-authoring": {
+        "SKILL.md": "40cdda7bd34d6bb16d7a09a509b1ee6fba6ac7b9e89839003f83ba461c544f82"
+      }
+    },
+    "1.0.1": {
+      "plugin-discovery": {
+        "SKILL.md": "334338ffd96d05c4dabe41ffc95af9e0f52bef8f30a5ecc4a2ee1304df624e43"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "7ef9f6e6b4e40ea7e962445c612857a98df82898825ffa21f668f078d66087d5"
+      },
+      "resource-authoring": {
+        "SKILL.md": "599e2f24451416f59ecdab1e50d1cded7f85c87a150207eac733a57fe633e477"
+      }
+    },
+    "1.0.2": {
+      "plugin-discovery": {
+        "SKILL.md": "670eb2805b6d55dfd00d950c8641d58330fd51fc37e8d19c1e18af8d360e83bc"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "ddfc8f8587f2558c75672b4ed38e6dc59b6b8e77922f4f49bd61ef4d1e79148e"
+      },
+      "resource-authoring": {
+        "SKILL.md": "50516fa64fb46ec7241948cc7ecc3dbf070d3b0618078d1011e4fe62753a8e8a"
+      }
+    },
+    "1.0.3": {
+      "plugin-discovery": {
+        "SKILL.md": "301bcbf027aa38e6fded5445926d7257cd247d048eefc32eb6d3de641e0e12ab"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "d28185f48f459285bdc84910b3348956b35356b57505215f32cdad0b67768e4f"
+      },
+      "resource-authoring": {
+        "SKILL.md": "77233ec63e86e852592fccf2576cc9131b3855ff23c8e9d1760740ff33fde93f"
+      }
+    },
+    "1.0.5": {
+      "plugin-discovery": {
+        "SKILL.md": "aba045ba3c683536a51648d9735354ede2da31506315075d1673cfae89b2002d"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "7541877699818df441533f880d2c39db282a22cc4c7f7a8d022642f3484ae4ea"
+      },
+      "resource-authoring": {
+        "SKILL.md": "2934f9c78a8c6744fdda2c59a5228d3a9cd177261682f630f2ad3373e2229d01"
+      }
+    },
+    "1.0.4": {
+      "plugin-discovery": {
+        "SKILL.md": "d5d6b1a8fcb10ba28b553e434e8272945b072d69602cb991b3fe781443f33c8c"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "687b0abda5bb84411bc5514868fc4418ef5a884e200742c1f3b9d4d2321a2ca2"
+      },
+      "resource-authoring": {
+        "SKILL.md": "4081bb3fc475a96343466042640b3e4f39edbf355581d0a9acae4510cb260b95"
+      }
+    },
+    "1.0.9": {
+      "plugin-discovery": {
+        "SKILL.md": "fd56a9c716e3d18ca7702c147068778622d6f7be6afb98548b0d33466726d5ed"
+      },
+      "workflow-assembly": {
+        "SKILL.md": "5c10c5880590f76e416f907bcf14ba73aeff6e3e9fb6852993e6a58f5e92a02c"
+      },
+      "resource-authoring": {
+        "SKILL.md": "525f245a29a8dcdc421a7c51551ee2817c05b901b82d2031493f24a2dd543e97"
+      }
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "agent-system.workflow.v3",
+  "id": "workflow-file-preview-editor",
+  "uuid": "00000000-0000-4000-8000-000000000003",
+  "version": "2.0.0",
+  "name": "File Preview Editor",
+  "description": "驗證 AppFilePreviewDialog 傳輸，執行單次 delegation，並回傳不可直接寫檔的完整修改提案 JSON。",
+  "scope": "global",
+  "nodes": [
+    {
+      "id": "command",
+      "type": "resource.command",
+      "position": {
+        "x": 80,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "file-preview-editor-native-v2-agent-policy-v2",
+        "scope": "global",
+        "content": "---\ndescription: 依檔案預覽內容與使用者指令產生確認後才可套用的完整修改提案 JSON\nagent: file-preview-editor-coordinator-native-v2-permissions-v2\n---\n輸入必須是 JSON 物件，包含 string `filePath`、`fileName`、`fileType`、`content`、非空 `request`；content 可為空字串但不可缺少。`contentType` 若存在必須是 string；`selectedPins` 與 `references` 若存在必須是 arrays。system workflow 只使用 傳輸 提供的內容，不讀寫檔案；必須保留每個 pin 的 label、meta 與 text，不能合併或遺漏，再委派 editor。\n\n最終只能回傳一個可由 JSON.parse 直接解析且不含 code 圍欄/前言的 物件，頂層 鍵 必須且只能是 `schemaVersion`、`ok`、`filePath`、`summary`、`proposedContent`、`warnings`。schemaVersion 固定 `agent-system.file-preview-edit.v1`；filePath 逐字沿用輸入；成功時 ok=true 且 proposedContent 是完整新檔案文字；失敗時 ok=false、proposedContent 為空字串、warnings 列出原因。不得輸出 規劃、中介 包裝層、diff，或直接寫檔。\n\n$ARGUMENTS\n"
+      }
+    },
+    {
+      "id": "coordinator",
+      "type": "resource.agent",
+      "position": {
+        "x": 380,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "file-preview-editor-coordinator-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 驗證 file preview 傳輸、執行唯一 delegation 並保證 edit proposal 契約\nmode: primary\nsteps: 6\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n  - action: subagent\n    resource: file-preview-editor-agent-native-v2-permissions-v2\n    effect: allow\n---\n錯誤處理：發生錯誤、工具失敗、delegation 失敗或無法完成要求時，必須先呼叫 `error_log_recent`，再回傳 有界 失敗 回應；不得輸出 secrets 或完整 log。\n\n你是最終 edit-proposal 契約 負責者。不可輸出 規劃，也不可自行修改 content。解析輸入，驗證檔案欄位、binary 限制、所有 selectedPins/references，保留每個 pin 的順序、label、meta、text與獨立範圍，並在內部建立完整 摘要。\n\n每個 request 必須實際呼叫 task 工具恰好一次；參數固定使用 `subagent_type: file-preview-editor-agent-native-v2-permissions-v2`、簡短 `description`、以及包含原始輸入、驗證結果與 摘要 的 `prompt`。不得把工具參數印成文字，不得跳過呼叫；無效或 binary 輸入也委派 editor 產生標準失敗 proposal。\n\n等待 tool 結果並驗證 精確 `agent-system.file-preview-edit.v1` 鍵、型別與 filePath。通過後只回傳 child JSON，不加 包裝層、圍欄或前言。工具失敗或 負載 無效時回傳同 schema 的失敗 proposal，proposedContent空白且warnings列出原因。\n"
+      }
+    },
+    {
+      "id": "agent",
+      "type": "resource.agent",
+      "position": {
+        "x": 700,
+        "y": 160
+      },
+      "data": {
+        "mode": "managed",
+        "name": "file-preview-editor-agent-native-v2-permissions-v2",
+        "scope": "global",
+        "content": "---\ndescription: 僅依 傳輸 內容產生完整且可確認的 file preview edit proposal\nmode: subagent\nsteps: 4\npermissions:\n  - action: \"*\"\n    resource: \"*\"\n    effect: deny\n  - action: error_log_recent\n    resource: \"*\"\n    effect: allow\n---\n錯誤處理：發生錯誤、工具失敗、delegation 失敗或無法完成要求時，必須先呼叫 `error_log_recent`，再回傳 有界 失敗 回應；不得輸出 secrets 或完整 log。\n\n你是 File Preview 成品 editor。只能使用 委派的 prompt 提供的原始輸入與 已驗證 摘要；不使用工具，不讀取、寫入、刪除或執行檔案，也不回傳 規劃。\n\n最終只能輸出一個可由 JSON.parse 直接解析的 JSON 物件，不得有 code 圍欄、前言或其他文字。頂層 鍵 必須且只能是 schemaVersion、ok、filePath、summary、proposedContent、warnings。schemaVersion 固定 `agent-system.file-preview-edit.v1`；ok 是 boolean；filePath 逐字沿用輸入；summary 是簡短 string；proposedContent 是 string；warnings 是 string array。\n\n以輸入 content 作為唯一原始檔案。成功時保留未要求修改的內容、格式、換行與結構，proposedContent 必須是完整檔案而非 diff/片段。若有 selectedPins，逐一遵守每個 tag 的 label/meta/text 與獨立範圍；預設只修改所有 pin 範圍的聯集，只有 request 明確要求整份檔案才擴大，重疊 pin 可共同推理但不可遺漏。沒有 pins 時才以整份 content 判斷。references 只可使用實際提供的名稱或摘要，不得虛構內容。若不需修改，原樣回傳 content並在 summary 說明。\n\n輸入不完整、request 不清楚、contentType=binary、修改與檔案類型不相容、pin 無法在 content 中安全定位，或缺少產生完整內容的資料時，回傳 ok=false、proposedContent=空字串、warnings 列出原因。不得嵌入秘密、虛構檔案、擴大未要求行為或把 Agent note/Markdown 圍欄 放入 proposedContent。輸出前檢查 精確 鍵、filePath、所有 pins、完整內容與 JSON escaping，特別是換行、反斜線與引號。\n"
+      }
+    },
+    {
+      "id": "builtin-tool-global-error_log_recent",
+      "type": "resource.tool",
+      "position": {
+        "x": 760,
+        "y": 80
+      },
+      "data": {
+        "mode": "reference",
+        "name": "error_log_recent",
+        "scope": "global"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "command-coordinator",
+      "source": "command",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "coordinator-file-preview-editor",
+      "source": "coordinator",
+      "target": "agent",
+      "kind": "delegation",
+      "sourceHandle": "delegation",
+      "targetHandle": "agent"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-coordinator",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "coordinator",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    },
+    {
+      "id": "capability-builtin-tool-global-error_log_recent-agent",
+      "source": "builtin-tool-global-error_log_recent",
+      "target": "agent",
+      "kind": "capability",
+      "sourceHandle": "capability",
+      "targetHandle": "capability"
+    }
+  ],
+  "metadata": {
+    "system": true,
+    "deletable": false,
+    "role": "workflow-file-preview-editor",
+    "consumer": "AppFilePreviewDialog"
+  },
+  "variables": {},
+  "createdAt": "2026-08-05T00:00:00.000Z",
+  "updatedAt": "2026-08-06T01:14:34.795Z"
+}

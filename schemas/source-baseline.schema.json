@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/source-baseline.schema.json",
+  "title": "Pinned Default Workflow and System Skills source baseline fingerprints",
+  "type": "object",
+  "required": ["schemaVersion", "sourceCommit", "workflows", "skills", "legacyUpgradesFrom"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.default-workflow-source-baseline.v1" },
+    "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "workflows": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "required": ["id", "uuid", "sourceVersion", "canonicalSha256"],
+        "properties": {
+          "id": { "type": "string" },
+          "uuid": { "type": "string", "format": "uuid" },
+          "sourceVersion": { "type": "string" },
+          "canonicalSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["id", "sourceVersion", "sha256"],
+        "properties": {
+          "id": { "enum": ["plugin-discovery", "workflow-assembly", "resource-authoring"] },
+          "sourceVersion": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "legacyUpgradesFrom": { "type": "object", "propertyNames": { "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" } }
+  },
+  "additionalProperties": false
+}

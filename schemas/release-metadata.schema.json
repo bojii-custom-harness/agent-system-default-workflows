@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bojii-custom-harness/agent-system-default-workflows/schemas/release-metadata.schema.json",
+  "title": "Immutable Default Workflow Release asset identity",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "id", "version", "channel", "tag", "sourceCommit", "asset"],
+  "properties": {
+    "schemaVersion": { "const": "agent-system.default-workflow-release.v1" },
+    "kind": { "enum": ["workflow", "system-skills"] },
+    "id": { "type": "string" },
+    "version": { "type": "string" },
+    "channel": { "enum": ["stable", "dev"] },
+    "tag": { "type": "string" },
+    "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "asset": {
+      "type": "object",
+      "required": ["name", "url", "size", "sha256"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "size": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
