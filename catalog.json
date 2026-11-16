@@ -66,6 +66,72 @@
           "sha256": "de2e599cd0b01f656192a3d40c70724cb6240dbb6b7591ee1db1974768660be1"
         }
       ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-generator",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-generator-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-generator-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-generator-2.0.0/workflow-workflow-generator-2.0.0.json",
+          "size": 209768,
+          "sha256": "da5426eea00b40ee63d6eb8a56210046cd3fc94964e8a7c79f3c7ea5a50755c6"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-generator-2.0.0/release-metadata.json",
+          "size": 602,
+          "sha256": "52a45f4f408dab08e7b691a8048c53fb3930999c09a2042ab010ee2d5f1af708"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-node-prompt-writer",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-node-prompt-writer-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-node-prompt-writer-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-node-prompt-writer-2.0.0/workflow-workflow-node-prompt-writer-2.0.0.json",
+          "size": 59821,
+          "sha256": "27f6456b4b8146752465809581879002bb4edae2a553e8914d5741b976efc21d"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-node-prompt-writer-2.0.0/release-metadata.json",
+          "size": 646,
+          "sha256": "a3900546d38af4c9e9788201ec145bc9f6f5dfa6a169bac0221663c97c30f2a1"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-plugin-finder",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-plugin-finder-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-plugin-finder-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-plugin-finder-2.0.0/workflow-workflow-plugin-finder-2.0.0.json",
+          "size": 22252,
+          "sha256": "e26fa76f2191c4c44c353be43de0da7ab18495855c4957e37a87ae9ba7784bb1"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-plugin-finder-2.0.0/release-metadata.json",
+          "size": 621,
+          "sha256": "d6397f29c3b5b7232b16423584782baf645d206c9d3920ea11c08b8e09cad7c2"
+        }
+      ]
     }
   ]
 }
