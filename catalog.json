@@ -2,6 +2,28 @@
   "schemaVersion": "agent-system.default-workflow-catalog.v1",
   "entries": [
     {
+      "kind": "system-skills",
+      "id": "system-skills",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "system-skills-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "system-skills-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/system-skills-2.0.0/system-skills-2.0.0.json",
+          "size": 19587,
+          "sha256": "724ba497b203a583d9609041de2cdd8a912d854655a393b6000f72edcf3af52c"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/system-skills-2.0.0/release-metadata.json",
+          "size": 563,
+          "sha256": "02aded5a6d65765fd40c5847d20fc22cc26d8643cc855bd5d16dc3cbfe1cbfd3"
+        }
+      ]
+    },
+    {
       "kind": "workflow",
       "id": "workflow-agent-writer",
       "version": "2.0.0",
@@ -218,6 +240,28 @@
           "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-tool-writer-2.0.0/release-metadata.json",
           "size": 611,
           "sha256": "3a9633b585e75ad2ccac289115fb4998fe77d25c925fa6900f4051b6eac0280e"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-updater",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-updater-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-updater-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-updater-2.0.0/workflow-workflow-updater-2.0.0.json",
+          "size": 45499,
+          "sha256": "06318a922a780a8ce39f0e2bddaed40644c60601faa019a1f09cdd46b0861eb6"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-updater-2.0.0/release-metadata.json",
+          "size": 591,
+          "sha256": "c6d0ba81f81efdd4a81a26a091c0e8e354ebfdac3e68bec46b3fb5779020310b"
         }
       ]
     }
