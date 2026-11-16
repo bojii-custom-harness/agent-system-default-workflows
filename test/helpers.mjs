@@ -19,13 +19,14 @@ export function runGit(cwd, args) {
   return result.stdout.toString("utf8").trim();
 }
 
-export async function makeGitFixture({ tags = [] } = {}) {
+export async function makeGitFixture({ tags = [], prepareSource } = {}) {
   await mkdir(TEST_BASE, { recursive: true });
   const directory = await mkdtemp(join(TEST_BASE, "default-workflows-fixture-"));
   const root = join(directory, "source");
   const remote = join(directory, "remote.git");
   await mkdir(root, { recursive: true });
   for (const relative of COPY_PATHS) await cp(resolve(ROOT, relative), join(root, relative), { recursive: true });
+  if (prepareSource) await prepareSource(root);
 
   runGit(directory, ["init", "--bare", "--initial-branch=main", remote]);
   runGit(root, ["init", "--initial-branch=main"]);

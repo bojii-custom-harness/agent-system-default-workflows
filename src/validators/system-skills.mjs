@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { ContractError } from "../errors.mjs";
-import { CONTENT_VERSION, SKILLS_MANIFEST_SCHEMA, SYSTEM_SKILL_IDS, UPGRADE_HASHES } from "../constants.mjs";
+import { SKILLS_MANIFEST_SCHEMA, SYSTEM_SKILL_IDS, UPGRADE_HASHES } from "../constants.mjs";
 import { parseSemVer } from "../semver.mjs";
 
 const SHA256 = /^[0-9a-f]{64}$/;
@@ -16,7 +16,7 @@ export function validateSkillsManifest(value, skillFiles) {
   }
   const expectedKeys = ["schemaVersion", "product", "version", "sourceVersion", "sourceCommit", "skills", "upgradesFrom"];
   exactKeys(value, expectedKeys, "System Skills manifest");
-  if (value.version !== CONTENT_VERSION || !parseSemVer(value.version) || !parseSemVer(value.sourceVersion) || !COMMIT.test(value.sourceCommit)) {
+  if (!parseSemVer(value.version) || !parseSemVer(value.sourceVersion) || !COMMIT.test(value.sourceCommit)) {
     throw new ContractError("SKILLS_MANIFEST_VERSION_INVALID", "System Skills versions or source commit are invalid.");
   }
   if (!Array.isArray(value.skills) || value.skills.length !== SYSTEM_SKILL_IDS.length || value.skills.some((id, index) => id !== SYSTEM_SKILL_IDS[index])) {
@@ -45,7 +45,7 @@ export function validateSkillsManifest(value, skillFiles) {
     if (!text.startsWith(`---\nname: ${id}\n`) && !text.startsWith(`---\r\nname: ${id}\r\n`)) {
       throw new ContractError("SKILL_IDENTITY_INVALID", `${id}/SKILL.md frontmatter does not match its directory identity.`);
     }
-    if (!hasVersionMarker(text, id, CONTENT_VERSION)) throw new ContractError("SKILL_VERSION_MARKER_INVALID", `${id}/SKILL.md must declare version ${CONTENT_VERSION} exactly once.`);
+    if (!hasVersionMarker(text, id, value.version)) throw new ContractError("SKILL_VERSION_MARKER_INVALID", `${id}/SKILL.md must declare bundle version ${value.version} exactly once.`);
   }
   return value;
 }
@@ -68,10 +68,10 @@ export function buildSkillsBundle(manifest, skillFiles) {
   };
 }
 
-export function restoreSourceSkillVersion(text, id, sourceVersion) {
+export function restoreSourceSkillVersion(text, id, currentVersion, sourceVersion) {
   const pattern = id === "plugin-discovery"
-    ? /版本為 2\.0\.0 的 System Skill/g
-    : /is version 2\.0\.0\./g;
+    ? new RegExp(`版本為 ${escapeRegExp(currentVersion)} 的 System Skill`, "g")
+    : new RegExp(`is version ${escapeRegExp(currentVersion)}\\.`, "g");
   const matches = [...text.matchAll(pattern)];
   if (matches.length !== 1) throw new ContractError("SKILL_VERSION_MARKER_INVALID", `${id}/SKILL.md must have one replaceable version marker.`);
   const match = matches[0][0];

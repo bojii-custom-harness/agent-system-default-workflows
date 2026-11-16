@@ -49,7 +49,7 @@ export async function loadSource(rootPath) {
   for (const id of WORKFLOW_IDS) {
     const { bytes, value } = await jsonFile(join(workflowDirectory, `${id}.json`));
     validateWorkflow(value, id);
-    if (value.version !== CONTENT_VERSION) throw new ContractError("WORKFLOW_CONTENT_VERSION_INVALID", `${id} must use approved content version ${CONTENT_VERSION}.`);
+    if (!parseSemVer(value.version)) throw new ContractError("WORKFLOW_CONTENT_VERSION_INVALID", `${id} must declare a valid independent SemVer version.`);
     if (uuids.has(value.uuid)) throw new ContractError("WORKFLOW_UUID_DUPLICATE", `${id} duplicates another Workflow UUID.`);
     uuids.add(value.uuid);
     workflowFiles.set(id, bytes);
@@ -116,7 +116,7 @@ export function validateSourceManifests({ sourceManifest, baseline, workflowMani
     const base = baselineById.get(workflow.id);
     const item = manifestById.get(workflow.id);
     const bytes = workflowFiles.get(workflow.id);
-    if (!base || !item || base.uuid !== workflow.uuid || item.uuid !== workflow.uuid || item.version !== CONTENT_VERSION
+    if (!base || !item || base.uuid !== workflow.uuid || item.uuid !== workflow.uuid || item.version !== workflow.version
       || item.sourceVersion !== base.sourceVersion || item.file !== `workflows/${workflow.id}.json`
       || item.sha256 !== sha256(bytes) || !HEX_SHA256.test(base.canonicalSha256)
       || canonicalHash({ ...workflow, version: base.sourceVersion }) !== base.canonicalSha256) {
@@ -135,7 +135,7 @@ export function validateSourceManifests({ sourceManifest, baseline, workflowMani
   for (const id of SYSTEM_SKILL_IDS) {
     const base = baselineSkills.get(id);
     const bytes = skillFiles[id];
-    const restored = Buffer.from(restoreSourceSkillVersion(bytes.toString("utf8"), id, base?.sourceVersion ?? ""), "utf8");
+    const restored = Buffer.from(restoreSourceSkillVersion(bytes.toString("utf8"), id, skillsManifest.version, base?.sourceVersion ?? ""), "utf8");
     if (!base || !HEX_SHA256.test(base.sha256) || sha256(restored) !== base.sha256) {
       throw new ContractError("SYSTEM_SKILL_SOURCE_DRIFT", `${id}/SKILL.md differs from its pinned baseline beyond the approved version marker reset.`);
     }

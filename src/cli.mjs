@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractError } from "./errors.mjs";
-import { CATALOG_SCHEMA, CLI_VERSION, CONTENT_VERSION, REPOSITORY, SYSTEM_SKILL_IDS, WORKFLOW_IDS } from "./constants.mjs";
+import { CATALOG_SCHEMA, CLI_VERSION, REPOSITORY, SYSTEM_SKILL_IDS, WORKFLOW_IDS } from "./constants.mjs";
 import { assertSemVer, channelFor, compareSemVer, parseReleaseTag, releaseTag } from "./semver.mjs";
 import { loadSource } from "./source.mjs";
 import { validateCatalog } from "./validators/catalog.mjs";
@@ -23,7 +23,7 @@ export async function runCli(args, options = {}) {
   }
   const source = await loadSource(root);
   if (command === "validate") {
-    console.log(JSON.stringify({ valid: true, sourceCommit: source.sourceManifest.sourceCommit, workflows: source.workflows.length, systemSkills: source.skillManifestBytes ? SYSTEM_SKILL_IDS.length : 0, version: CONTENT_VERSION }));
+    console.log(JSON.stringify({ valid: true, sourceCommit: source.sourceManifest.sourceCommit, workflows: source.workflows.length, systemSkills: source.skillManifestBytes ? SYSTEM_SKILL_IDS.length : 0, systemSkillsVersion: source.skillsManifest.version }));
     return 0;
   }
   if (command === "list") {
@@ -68,7 +68,7 @@ export function publishTag({ root, source, id, version, remote }) {
   const workflow = source.workflows.find((item) => item.id === id);
   if (!isBundle && !workflow) throw new ContractError("PRODUCT_ID_INVALID", `publish ID ${id} is not an approved Workflow or System Skills bundle.`);
   const currentVersion = isBundle ? source.skillsManifest.version : workflow.version;
-  if (version !== currentVersion || currentVersion !== CONTENT_VERSION) {
+  if (version !== currentVersion) {
     throw new ContractError("PUBLISH_VERSION_MISMATCH", `${id} source version is ${currentVersion}; refusing to tag requested version ${version}.`);
   }
   const kind = isBundle ? "system-skills" : "workflow";

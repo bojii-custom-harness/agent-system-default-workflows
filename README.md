@@ -7,6 +7,7 @@
 - 首批內容取自 Agent System 已提交 baseline `7f5c7a56bce02501547e2933bbefd7f4a745f0b9`。
 - 11 個 Workflow 的 ID、UUID、graph、資源與內容維持來源原貌，只把核准的內容版本標記改為 `2.0.0`。
 - 三個產品 System Skills 為 `plugin-discovery`、`workflow-assembly`、`resource-authoring`；Skill 內容版本與 bundle 版本均為 `2.0.0`。
+- 初版所有產品從 `2.0.0` 起始；後續各 Workflow 與 System Skills bundle 依自身 SemVer 獨立演進，不要求彼此版本相同。
 - `system-skills/manifest.json` 保留已支援的舊版安裝內容 hash，並精確新增 `1.0.8`／`1.0.9` upgrade mappings。
 - 不包含 `find-skills`、`skill-creator` 的 runtime Skill 原始檔，也不包含 Agent System runtime Plugin／guard 程式碼。Workflow JSON 內既有的 Resource references 仍依 baseline 保留。
 
