@@ -132,6 +132,94 @@
           "sha256": "d6397f29c3b5b7232b16423584782baf645d206c9d3920ea11c08b8e09cad7c2"
         }
       ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-skill-creator",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-skill-creator-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-skill-creator-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-skill-creator-2.0.0/workflow-workflow-skill-creator-2.0.0.json",
+          "size": 12899,
+          "sha256": "36c45c629d43e7cc8aeede28f9b653b915b90ca8e56fb4bbef13ce5a0d31de65"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-skill-creator-2.0.0/release-metadata.json",
+          "size": 621,
+          "sha256": "c61a076a16e4457d45ff0aa3dc2d25da54a06d69a67fcb9c8608014d00436017"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-skill-finder",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-skill-finder-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-skill-finder-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-skill-finder-2.0.0/workflow-workflow-skill-finder-2.0.0.json",
+          "size": 11248,
+          "sha256": "2a501a0e320548e800b88d23a024a4c848cd8df0014bd323781845fb55d4d8e1"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-skill-finder-2.0.0/release-metadata.json",
+          "size": 616,
+          "sha256": "f0a39f6778263d2c1d8abd484fd84fa0c5626c29f320d346724dc15e5f645bdd"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-skill-writer",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-skill-writer-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-skill-writer-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-skill-writer-2.0.0/workflow-workflow-skill-writer-2.0.0.json",
+          "size": 13131,
+          "sha256": "5cfd9ecf1331b96020071d9306927d76ba62919b218a2416ea560a9e263facd0"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-skill-writer-2.0.0/release-metadata.json",
+          "size": 616,
+          "sha256": "228aaa5ebaf8bc78343fa8a745d92e19c08bbbe4959ccb1fc66292fc05a2a43b"
+        }
+      ]
+    },
+    {
+      "kind": "workflow",
+      "id": "workflow-tool-writer",
+      "version": "2.0.0",
+      "channel": "stable",
+      "tag": "workflow-tool-writer-2.0.0",
+      "sourceCommit": "6595dd9305f74a5aabe8b6490dbca1b558645f1f",
+      "assets": [
+        {
+          "name": "workflow-workflow-tool-writer-2.0.0.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-tool-writer-2.0.0/workflow-workflow-tool-writer-2.0.0.json",
+          "size": 14441,
+          "sha256": "25cc84e613e1b3bdc38f82c3bac29c010cb2848183599d33317fec29e2090b94"
+        },
+        {
+          "name": "release-metadata.json",
+          "url": "https://github.com/bojii-custom-harness/agent-system-default-workflows/releases/download/workflow-tool-writer-2.0.0/release-metadata.json",
+          "size": 611,
+          "sha256": "3a9633b585e75ad2ccac289115fb4998fe77d25c925fa6900f4051b6eac0280e"
+        }
+      ]
     }
   ]
 }
