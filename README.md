@@ -33,7 +33,7 @@ npm test
 
 ```powershell
 node .\bin\default-workflows.mjs catalog --output .\catalog.json
-node .\bin\default-workflows.mjs download workflow-generator 2.0.0 --catalog .\catalog.json --output .\workflow-generator.json
+node .\bin\default-workflows.mjs download workflow-generator 2.0.0 --channel stable --catalog .\catalog.json --output .\workflow-generator.json
 node .\bin\default-workflows.mjs list
 node .\bin\default-workflows.mjs history workflow-generator
 node .\bin\default-workflows.mjs history system-skills
@@ -42,11 +42,11 @@ node .\bin\default-workflows.mjs publish workflow-generator 2.0.0 --remote origi
 node .\bin\default-workflows.mjs publish system-skills 2.0.0 --remote origin
 ```
 
-`catalog` 只從本 CLI 固定的公開 catalog 來源更新版本目錄；`download` 依 catalog 中指定的 Workflow 或 System Skills 版本，下載並驗證精確 release metadata、大小、SHA-256 與內容身分，再寫入 `--output`。可用 `--metadata-output` 額外保存已驗證的 release metadata；省略 `--catalog` 時，`download` 會先由 CLI 取得遠端 catalog。兩個命令都不安裝或切換 Agent System 版本。
+`catalog` 一律從本 CLI 固定的公開來源取得並回傳完整 catalog，包含 stable 與 dev prerelease；部署環境的可見範圍由 Agent System backend 依 Compose release-channel 設定篩選。`download` 必須帶入產品 release 的 `--channel stable|dev`，再依 catalog 中完全相符的 ID、channel 與版本下載，並驗證 release metadata、大小、SHA-256 與內容身分後寫入 `--output`。可用 `--metadata-output` 額外保存已驗證 metadata；省略 `--catalog` 時，`download` 會先取得完整遠端 catalog。兩個命令都不安裝或切換 Agent System 版本。
 
 `list` 顯示目前 source 版本、catalog 可取得版本與本機 Git tags；`history` 只列指定產品的明確 tag／catalog 版本。CLI 不推送 branch。`publish` 僅建立並推送一個精確 tag，絕不 force-update；已存在且指向相同 source commit／bytes 的 tag 可冪等重試，來源或內容不同則拒絕。
 
-Workflow tag 格式為 `<workflow-id>-<SemVer>`，bundle tag 格式為 `system-skills-<SemVer>`。正式 SemVer 是 `stable`，含 prerelease 的 SemVer 是 `dev`。CLI 推送 tag 後，GitHub Actions 會讀取所有已推送的有效 tags，驗證並補完不可變 Release assets，再以有界 compare-and-swap 重試更新 `catalog.json`。可在 Actions 對既有 tag 執行 `Publish Releases` workflow_dispatch 重試；流程會重新讀取既有 tag、Release 與 assets，不覆寫衝突內容。
+Workflow tag 格式為 `<workflow-id>-<SemVer>`，bundle tag 格式為 `system-skills-<SemVer>`。正式 SemVer 是 `stable`，含 prerelease 的 SemVer 是 `dev`。CLI 推送 tag 後，GitHub Actions 會讀取所有已推送的有效 tags，驗證並補完不可變 Release assets，再以有界 compare-and-swap 重試更新完整 `catalog.json`；同一 tag 與 catalog channel 必須符合 SemVer prerelease 標記。可在 Actions 對既有 tag 執行 `Publish Releases` workflow_dispatch 重試；流程會重新讀取既有 tag、Release 與 assets，不覆寫衝突內容。
 
 ## 發布契約
 

@@ -61,10 +61,12 @@ export async function downloadRelease({
   catalog,
   id,
   version,
+  channel,
   fetchImpl = globalThis.fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   retryDelayImpl = waitBeforeRetry,
 } = {}) {
+  assertReleaseChannel(channel);
   const isSystemSkills = id === "system-skills";
   if (!isSystemSkills && !WORKFLOW_IDS.includes(id)) {
     throw new ContractError("PRODUCT_ID_INVALID", "The requested Workflow ID is not approved.");
@@ -73,9 +75,9 @@ export async function downloadRelease({
   validateCatalog(catalog);
   const kind = isSystemSkills ? "system-skills" : "workflow";
   const entry = catalog.entries.find((candidate) => (
-    candidate.kind === kind && candidate.id === id && candidate.version === version
+    candidate.kind === kind && candidate.id === id && candidate.version === version && candidate.channel === channel
   ));
-  if (!entry) throw new ContractError("RELEASE_NOT_FOUND", `The exact release ${id}@${version} is not present in the catalog.`);
+  if (!entry) throw new ContractError("RELEASE_NOT_FOUND", `The exact release ${id} ${channel} ${version} is not present in the catalog.`);
 
   const productName = kind === "system-skills"
     ? `system-skills-${version}.json`
@@ -414,4 +416,10 @@ function isRecord(value) {
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function assertReleaseChannel(channel) {
+  if (channel !== "stable" && channel !== "dev") {
+    throw new ContractError("RELEASE_CHANNEL_INVALID", "Release channel must be explicitly set to stable or dev.");
+  }
 }

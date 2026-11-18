@@ -13,7 +13,7 @@ const WORKFLOW_ID = "workflow-generator";
 const VERSION = "2.3.0";
 const SOURCE_COMMIT = "6595dd9305f74a5aabe8b6490dbca1b558645f1f";
 
-test("catalog command downloads the CLI-owned catalog, validates it, and writes its exact bytes", async () => {
+test("catalog command downloads the complete CLI-owned catalog with stable and dev releases", async () => {
   const fixture = createFixture();
   const directory = await mkdtemp(join(tmpdir(), "default-workflows-cli-catalog-"));
   const outputPath = join(directory, "catalog.json");
@@ -30,9 +30,21 @@ test("catalog command downloads the CLI-owned catalog, validates it, and writes 
     assert.deepEqual(requests.map(({ url }) => url), [DEFAULT_CATALOG_URL]);
     assert.equal(requests[0].options.redirect, "manual");
     assert.deepEqual(await readFile(outputPath), fixture.catalogBytes);
+    assert.deepEqual(JSON.parse(await readFile(outputPath, "utf8")).entries.map((entry) => entry.channel), ["stable", "dev"]);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("catalog is complete and download requires an explicit stable or dev release channel", async () => {
+  await assert.rejects(
+    runCli(["catalog", "--channel", "stable"], { fetchImpl: async () => { throw new Error("must not fetch"); } }),
+    (error) => error instanceof ContractError && error.code === "UNKNOWN_OPTION",
+  );
+  await assert.rejects(
+    runCli(["download", WORKFLOW_ID, VERSION, "--output", "workflow.json"]),
+    (error) => error instanceof ContractError && error.code === "RELEASE_CHANNEL_INVALID",
+  );
 });
 
 test("download command selects the exact catalog release and emits verified asset bytes", async () => {
@@ -46,6 +58,7 @@ test("download command selects the exact catalog release and emits verified asse
     await writeFile(catalogPath, fixture.catalogBytes);
     await runCli([
       "download", WORKFLOW_ID, VERSION,
+      "--channel", "stable",
       "--catalog", catalogPath,
       "--output", outputPath,
       "--metadata-output", metadataPath,
@@ -77,6 +90,7 @@ test("download command verifies the complete System Skills bundle", async () => 
     catalog: fixture.catalog,
     id: "system-skills",
     version: VERSION,
+    channel: "stable",
     fetchImpl: async (url) => new Response(fixture.assets.get(String(url)), { status: 200 }),
     retryDelayImpl: async () => undefined,
   });
@@ -84,6 +98,47 @@ test("download command verifies the complete System Skills bundle", async () => 
   assert.deepEqual(result.bytes, fixture.productBytes);
   assert.equal(result.product.skills.length, SYSTEM_SKILL_IDS.length);
   assert.equal(result.metadata.version, VERSION);
+});
+
+test("download command accepts an exact dev release when its release channel matches", async () => {
+  const fixture = createFixture();
+  const dev = fixture.catalog.entries.find((entry) => entry.channel === "dev");
+  const release = await downloadRelease({
+    catalog: fixture.catalog,
+    id: WORKFLOW_ID,
+    version: fixture.devVersion,
+    channel: "dev",
+    fetchImpl: async (url) => new Response(fixture.assets.get(String(url)), { status: 200 }),
+    retryDelayImpl: async () => undefined,
+  });
+
+  assert.equal(release.entry.tag, dev.tag);
+  assert.equal(release.entry.channel, "dev");
+  assert.equal(release.product.version, fixture.devVersion);
+});
+
+test("download requires the channel to match the exact Workflow release", async () => {
+  const fixture = createFixture();
+  const directory = await mkdtemp(join(tmpdir(), "default-workflows-cli-prod-download-"));
+  const catalogPath = join(directory, "catalog.json");
+  try {
+    await writeFile(catalogPath, fixture.catalogBytes);
+    await assert.rejects(downloadRelease({
+      catalog: fixture.catalog,
+      id: WORKFLOW_ID,
+      version: fixture.devVersion,
+      channel: "stable",
+      fetchImpl: async () => { throw new Error("must reject before downloading"); },
+    }), (error) => error instanceof ContractError && error.code === "RELEASE_NOT_FOUND");
+    await assert.rejects(runCli([
+      "download", WORKFLOW_ID, fixture.devVersion,
+      "--channel", "stable",
+      "--catalog", catalogPath,
+      "--output", join(directory, "workflow.json"),
+    ]), (error) => error instanceof ContractError && error.code === "RELEASE_NOT_FOUND");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("release downloads fail closed on hash, metadata identity, redirects, and oversized bodies", async (t) => {
@@ -94,6 +149,7 @@ test("release downloads fail closed on hash, metadata identity, redirects, and o
       catalog: fixture.catalog,
       id: WORKFLOW_ID,
       version: VERSION,
+      channel: "stable",
       fetchImpl: async (url) => new Response(
         String(url) === fixture.metadataAsset.url ? fixture.metadataBytes : Buffer.from("{}"),
         { status: 200 },
@@ -115,6 +171,7 @@ test("release downloads fail closed on hash, metadata identity, redirects, and o
       catalog: wrongCatalog,
       id: WORKFLOW_ID,
       version: VERSION,
+      channel: "stable",
       fetchImpl: async (url) => new Response(assetBodies.get(String(url)), { status: 200 }),
       retryDelayImpl: async () => undefined,
     }), (error) => error instanceof ContractError && error.code === "RELEASE_METADATA_MISMATCH");
@@ -165,18 +222,38 @@ test("catalog downloads use bounded retries for temporary HTTP failures", async 
 });
 
 function createFixture() {
-  const tag = `${WORKFLOW_ID}-${VERSION}`;
-  const assetBase = `https://github.com/${REPOSITORY}/releases/download/${tag}/`;
-  const product = {
-    schemaVersion: "agent-system.workflow.v3",
-    id: WORKFLOW_ID,
-    uuid: "00000000-0000-4000-8000-000000000001",
-    version: VERSION,
+  const stable = makeWorkflowRelease(VERSION, "00000000-0000-4000-8000-000000000001");
+  const devVersion = `${VERSION}-alpha.1`;
+  const dev = makeWorkflowRelease(devVersion, "00000000-0000-4000-8000-000000000002");
+  const catalog = { schemaVersion: "agent-system.default-workflow-catalog.v1", entries: [stable.entry, dev.entry] };
+  const catalogBytes = Buffer.from(`${JSON.stringify(catalog, null, 2)}\n`);
+  return {
+    catalog,
+    catalogBytes,
+    devVersion,
+    productBytes: stable.productBytes,
+    productAsset: stable.productAsset,
+    metadata: stable.metadata,
+    metadataBytes: stable.metadataBytes,
+    metadataAsset: stable.metadataAsset,
+    assets: new Map([
+      [stable.productAsset.url, stable.productBytes],
+      [stable.metadataAsset.url, stable.metadataBytes],
+      [dev.productAsset.url, dev.productBytes],
+      [dev.metadataAsset.url, dev.metadataBytes],
+    ]),
   };
+}
+
+function makeWorkflowRelease(version, uuid) {
+  const channel = version.includes("-") ? "dev" : "stable";
+  const tag = `${WORKFLOW_ID}-${version}`;
+  const assetBase = `https://github.com/${REPOSITORY}/releases/download/${tag}/`;
+  const product = { schemaVersion: "agent-system.workflow.v3", id: WORKFLOW_ID, uuid, version };
   const productBytes = Buffer.from(JSON.stringify(product));
   const productAsset = {
-    name: `workflow-${WORKFLOW_ID}-${VERSION}.json`,
-    url: `${assetBase}workflow-${WORKFLOW_ID}-${VERSION}.json`,
+    name: `workflow-${WORKFLOW_ID}-${version}.json`,
+    url: `${assetBase}workflow-${WORKFLOW_ID}-${version}.json`,
     size: productBytes.byteLength,
     sha256: sha256(productBytes),
   };
@@ -186,21 +263,13 @@ function createFixture() {
     size: 1,
     sha256: "0".repeat(64),
   };
-  const entry = {
-    kind: "workflow",
-    id: WORKFLOW_ID,
-    version: VERSION,
-    channel: "stable",
-    tag,
-    sourceCommit: SOURCE_COMMIT,
-    assets: [productAsset, metadataAsset],
-  };
+  const entry = { kind: "workflow", id: WORKFLOW_ID, version, channel, tag, sourceCommit: SOURCE_COMMIT, assets: [productAsset, metadataAsset] };
   const metadata = {
     schemaVersion: "agent-system.default-workflow-release.v1",
     kind: "workflow",
     id: WORKFLOW_ID,
-    version: VERSION,
-    channel: "stable",
+    version,
+    channel,
     tag,
     sourceCommit: SOURCE_COMMIT,
     asset: productAsset,
@@ -208,18 +277,7 @@ function createFixture() {
   const metadataBytes = Buffer.from(JSON.stringify(metadata));
   metadataAsset.size = metadataBytes.byteLength;
   metadataAsset.sha256 = sha256(metadataBytes);
-  const catalog = { schemaVersion: "agent-system.default-workflow-catalog.v1", entries: [entry] };
-  const catalogBytes = Buffer.from(`${JSON.stringify(catalog, null, 2)}\n`);
-  return {
-    catalog,
-    catalogBytes,
-    productBytes,
-    productAsset,
-    metadata,
-    metadataBytes,
-    metadataAsset,
-    assets: new Map([[productAsset.url, productBytes], [metadataAsset.url, metadataBytes]]),
-  };
+  return { entry, productBytes, productAsset, metadata, metadataBytes, metadataAsset };
 }
 
 function createSystemSkillsFixture() {

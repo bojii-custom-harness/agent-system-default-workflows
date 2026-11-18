@@ -36,13 +36,14 @@ export async function runCli(args, options = {}) {
     return 0;
   }
   if (command === "download") {
-    const parsed = parseCommandOptions(rest, ["--catalog", "--output", "--metadata-output"]);
+    const parsed = parseCommandOptions(rest, ["--channel", "--catalog", "--output", "--metadata-output"]);
     if (parsed.positionals.length !== 2) {
       throw new ContractError("DOWNLOAD_ARGUMENTS_REQUIRED", "download requires <workflow-id|system-skills> <SemVer>.");
     }
     const [id, version] = parsed.positionals;
     if (!id || !version) throw new ContractError("DOWNLOAD_ARGUMENTS_REQUIRED", "download requires <workflow-id|system-skills> <SemVer>.");
     if (!parsed.options["--output"]) throw new ContractError("DOWNLOAD_OUTPUT_REQUIRED", "download requires --output <path>.");
+    const channel = requiredReleaseChannel(parsed.options["--channel"]);
     const catalog = parsed.options["--catalog"]
       ? await readCatalog(parsed.options["--catalog"])
       : (await fetchCatalog(networkOptions(options))).catalog;
@@ -50,6 +51,7 @@ export async function runCli(args, options = {}) {
       catalog,
       id,
       version,
+      channel,
       ...networkOptions(options),
     });
     await writeOutputFiles([
@@ -240,6 +242,13 @@ function networkOptions(options) {
   };
 }
 
+function requiredReleaseChannel(value) {
+  if (value !== "stable" && value !== "dev") {
+    throw new ContractError("RELEASE_CHANNEL_INVALID", "download requires --channel stable|dev.");
+  }
+  return value;
+}
+
 async function writeOutputFile(path, bytes) {
   await writeOutputFiles([{ path, bytes }]);
 }
@@ -300,6 +309,8 @@ function helpText() {
     `Agent System Default Workflow CLI ${CLI_VERSION}`,
     "",
     "Commands:",
+    "  catalog [--output <path>]",
+    "  download <workflow-id|system-skills> <SemVer> --channel stable|dev [--catalog <path>] --output <path> [--metadata-output <path>]",
     "  validate",
     "  list [--catalog <path>]",
     "  history <workflow-id|system-skills> [--catalog <path>]",
