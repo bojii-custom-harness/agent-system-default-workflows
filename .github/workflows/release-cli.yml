@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'cli/v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Exact CLI tag to publish or retry
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -14,10 +20,12 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -27,22 +35,34 @@ jobs:
       - run: npm run validate
       - run: npm test
       - name: Package the fixed CLI
-        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          set -euo pipefail
-          version="$(node -p "require('./package.json').version")"
-          test "$GITHUB_REF_NAME" = "cli/v$version"
-          mkdir -p dist
+          $version = (node -p "require('./package.json').version").Trim()
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:RELEASE_TAG -ne "cli/v$version") { throw "Release tag does not match package version." }
+          New-Item -ItemType Directory -Path dist | Out-Null
           npm pack --pack-destination dist
-          mv "dist/bojii-custom-harness-agent-system-default-workflows-$version.tgz" \
-            "dist/agent-system-default-workflows-cli-$version.tgz"
-          sha256sum "dist/agent-system-default-workflows-cli-$version.tgz" > dist/SHA256SUMS
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $assetName = "agent-system-default-workflows-cli-$version.tgz"
+          Move-Item "dist/bojii-custom-harness-agent-system-default-workflows-$version.tgz" "dist/$assetName"
+          $sha256 = (Get-FileHash "dist/$assetName" -Algorithm SHA256).Hash.ToLowerInvariant()
+          $checksum = "$sha256  $assetName`n"
+          [System.IO.File]::WriteAllText(
+            (Join-Path $PWD "dist/SHA256SUMS"),
+            $checksum,
+            [System.Text.UTF8Encoding]::new($false)
+          )
       - name: Publish the immutable CLI Release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "dist/agent-system-default-workflows-cli-$(node -p "require('./package.json').version").tgz" \
-            dist/SHA256SUMS \
-            --title "Agent System Default Workflows CLI v$(node -p "require('./package.json').version")" \
+          $version = (node -p "require('./package.json').version").Trim()
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          gh release create $env:RELEASE_TAG `
+            "dist/agent-system-default-workflows-cli-$version.tgz" `
+            dist/SHA256SUMS `
+            --title "Agent System Default Workflows CLI v$version" `
             --notes "Fixed, self-contained Default Workflows catalog and exact-release download CLI."
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
