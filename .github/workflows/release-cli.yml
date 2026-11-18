@@ -1,0 +1,48 @@
+name: Publish Default Workflows CLI
+
+on:
+  push:
+    tags:
+      - 'cli/v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: default-workflows-cli-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run validate
+      - run: npm test
+      - name: Package the fixed CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          test "$GITHUB_REF_NAME" = "cli/v$version"
+          mkdir -p dist
+          npm pack --pack-destination dist
+          mv "dist/bojii-custom-harness-agent-system-default-workflows-$version.tgz" \
+            "dist/agent-system-default-workflows-cli-$version.tgz"
+          sha256sum "dist/agent-system-default-workflows-cli-$version.tgz" > dist/SHA256SUMS
+      - name: Publish the immutable CLI Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/agent-system-default-workflows-cli-$(node -p "require('./package.json').version").tgz" \
+            dist/SHA256SUMS \
+            --title "Agent System Default Workflows CLI v$(node -p "require('./package.json').version")" \
+            --notes "Fixed, self-contained Default Workflows catalog and exact-release download CLI."

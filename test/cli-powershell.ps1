@@ -44,7 +44,7 @@ function Invoke-BareGit {
   return (($lines | ForEach-Object { [string]$_ }) -join "`n").Trim()
 }
 
-if ((Invoke-Cli @("--version")) -ne "1.0.0") { throw "CLI package version is not 1.0.0." }
+if ((Invoke-Cli @("--version")) -ne "1.1.0") { throw "CLI package version is not 1.1.0." }
 $validation = ConvertFrom-Json (Invoke-Cli @("validate"))
 if (-not $validation.valid -or $validation.workflows -ne 11 -or $validation.systemSkills -ne 3) { throw "CLI source validation result is incomplete." }
 

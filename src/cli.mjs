@@ -1,12 +1,14 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { open, lstat, mkdir, readFile, rename, rm } from "node:fs/promises";
+import { basename, dirname, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { ContractError } from "./errors.mjs";
 import { CATALOG_SCHEMA, CLI_VERSION, REPOSITORY, SYSTEM_SKILL_IDS, WORKFLOW_IDS } from "./constants.mjs";
 import { assertSemVer, channelFor, compareSemVer, parseReleaseTag, releaseTag } from "./semver.mjs";
 import { loadSource } from "./source.mjs";
 import { validateCatalog } from "./validators/catalog.mjs";
+import { downloadRelease, fetchCatalog } from "./default-workflow-source.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -19,6 +21,53 @@ export async function runCli(args, options = {}) {
   }
   if (command === "--version" || command === "version") {
     console.log(CLI_VERSION);
+    return 0;
+  }
+  if (command === "catalog") {
+    const parsed = parseCommandOptions(rest, ["--output"]);
+    if (parsed.positionals.length > 0) throw new ContractError("CATALOG_ARGUMENTS_INVALID", "catalog does not accept positional arguments.");
+    const { bytes, sha256 } = await fetchCatalog(networkOptions(options));
+    if (parsed.options["--output"]) {
+      await writeOutputFile(parsed.options["--output"], bytes);
+      console.log(JSON.stringify({ repository: REPOSITORY, size: bytes.byteLength, sha256 }));
+    } else {
+      process.stdout.write(bytes);
+    }
+    return 0;
+  }
+  if (command === "download") {
+    const parsed = parseCommandOptions(rest, ["--catalog", "--output", "--metadata-output"]);
+    if (parsed.positionals.length !== 2) {
+      throw new ContractError("DOWNLOAD_ARGUMENTS_REQUIRED", "download requires <workflow-id|system-skills> <SemVer>.");
+    }
+    const [id, version] = parsed.positionals;
+    if (!id || !version) throw new ContractError("DOWNLOAD_ARGUMENTS_REQUIRED", "download requires <workflow-id|system-skills> <SemVer>.");
+    if (!parsed.options["--output"]) throw new ContractError("DOWNLOAD_OUTPUT_REQUIRED", "download requires --output <path>.");
+    const catalog = parsed.options["--catalog"]
+      ? await readCatalog(parsed.options["--catalog"])
+      : (await fetchCatalog(networkOptions(options))).catalog;
+    const release = await downloadRelease({
+      catalog,
+      id,
+      version,
+      ...networkOptions(options),
+    });
+    await writeOutputFiles([
+      { path: parsed.options["--output"], bytes: release.bytes },
+      ...(parsed.options["--metadata-output"]
+        ? [{ path: parsed.options["--metadata-output"], bytes: release.metadataBytes }]
+        : []),
+    ]);
+    console.log(JSON.stringify({
+      kind: release.entry.kind,
+      id: release.entry.id,
+      version: release.entry.version,
+      channel: release.entry.channel,
+      tag: release.entry.tag,
+      filename: release.productAsset.name,
+      size: release.bytes.byteLength,
+      sha256: release.productAsset.sha256,
+    }));
     return 0;
   }
   const source = await loadSource(root);
@@ -162,6 +211,73 @@ function releaseSummary(kind, id, version, tag, sourceCommit, action) {
 function optionValue(args, name) {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
+}
+
+function parseCommandOptions(args, allowedOptions) {
+  const positionals = [];
+  const options = {};
+  for (let index = 0; index < args.length; index += 1) {
+    const value = args[index];
+    if (!value.startsWith("--")) {
+      positionals.push(value);
+      continue;
+    }
+    if (!allowedOptions.includes(value)) throw new ContractError("UNKNOWN_OPTION", `Unknown option ${value}.`);
+    if (Object.hasOwn(options, value)) throw new ContractError("DUPLICATE_OPTION", `Option ${value} may only be provided once.`);
+    const optionValue = args[index + 1];
+    if (!optionValue || optionValue.startsWith("--")) throw new ContractError("OPTION_VALUE_REQUIRED", `${value} requires a value.`);
+    options[value] = optionValue;
+    index += 1;
+  }
+  return { positionals, options };
+}
+
+function networkOptions(options) {
+  return {
+    ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
+    ...(options.requestTimeoutMs ? { timeoutMs: options.requestTimeoutMs } : {}),
+    ...(options.retryDelayImpl ? { retryDelayImpl: options.retryDelayImpl } : {}),
+  };
+}
+
+async function writeOutputFile(path, bytes) {
+  await writeOutputFiles([{ path, bytes }]);
+}
+
+async function writeOutputFiles(outputs) {
+  const destinations = outputs.map(({ path }) => resolve(path));
+  if (new Set(destinations).size !== destinations.length) {
+    throw new ContractError("OUTPUT_PATH_CONFLICT", "Output and metadata paths must be different.");
+  }
+  const staged = [];
+  try {
+    for (const [index, output] of outputs.entries()) {
+      const destination = destinations[index];
+      const parent = dirname(destination);
+      await mkdir(parent, { recursive: true });
+      const temporary = resolve(parent, `.${basename(destination)}.${randomUUID()}.tmp`);
+      const handle = await open(temporary, "wx", 0o600);
+      try {
+        await handle.writeFile(output.bytes);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+      staged.push({ temporary, destination });
+    }
+    for (const { destination } of staged) {
+      await lstat(destination).then(() => {
+        throw new ContractError("OUTPUT_PATH_EXISTS", `Refusing to overwrite existing output: ${destination}`);
+      }, (error) => {
+        if (error instanceof ContractError) throw error;
+        if (error?.code !== "ENOENT") throw error;
+      });
+    }
+    for (const item of staged) await rename(item.temporary, item.destination);
+  } catch (error) {
+    for (const item of staged) await rm(item.temporary, { force: true }).catch(() => undefined);
+    throw error;
+  }
 }
 
 function git(root, args) {

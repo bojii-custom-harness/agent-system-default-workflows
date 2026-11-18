@@ -1,6 +1,6 @@
 export const REPOSITORY = "bojii-custom-harness/agent-system-default-workflows";
 export const CONTENT_VERSION = "2.0.0";
-export const CLI_VERSION = "1.0.0";
+export const CLI_VERSION = "1.1.0";
 export const WORKFLOW_IDS = Object.freeze([
   "workflow-agent-writer",
   "workflow-command-writer",
